@@ -42,9 +42,9 @@ services:
   graphiti-mcp:
     image: falkordb/graphiti-knowledge-graph-mcp:latest
     container_name: auto-claude-graphiti-mcp
-    platform: linux/amd64  # Required: image only available for amd64
+    platform: linux/amd64 # Required: image only available for amd64
     ports:
-      - "${GRAPHITI_MCP_PORT:-8000}:8000"
+      - "${GRAPHITI_MCP_PORT:-9000}:8000"
     env_file:
       # Load API keys from auto-claude/.env (CLI users) or .env (Frontend users)
       # Note: Only OPENAI_API_KEY is needed from these files
@@ -62,12 +62,19 @@ services:
       # Optional: Custom model settings (OPENAI_API_KEY comes from env_file)
       MODEL_NAME: ${GRAPHITI_MODEL_NAME:-gpt-4o-mini}
       EMBEDDING_MODEL: ${GRAPHITI_EMBEDDING_MODEL:-text-embedding-3-small}
+      # Force OpenAI provider (not Azure)
+      OPENAI_API_VERSION: "2024-10-21"
+      PROVIDER_TYPE: openai
     depends_on:
       falkordb:
         condition: service_healthy
     healthcheck:
       # SSE transport doesn't have /health endpoint, check if port is listening
-      test: ["CMD-SHELL", "curl -sf http://localhost:8000/sse --max-time 1 --head 2>/dev/null || exit 0"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl -sf http://localhost:8000/sse --max-time 1 --head 2>/dev/null || exit 0",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
