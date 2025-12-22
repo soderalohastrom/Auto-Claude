@@ -49,14 +49,14 @@ export function registerWorktreeHandlers(
             encoding: 'utf-8'
           }).trim();
 
-          // Get base branch (usually main or master)
+          // Get base branch - the current branch in the main project (where changes will be merged)
+          // This matches the Python merge logic which merges into the user's current branch
           let baseBranch = 'main';
           try {
-            // Try to get the default branch
-            baseBranch = execSync('git rev-parse --abbrev-ref origin/HEAD 2>/dev/null || echo main', {
+            baseBranch = execSync('git rev-parse --abbrev-ref HEAD', {
               cwd: project.path,
               encoding: 'utf-8'
-            }).trim().replace('origin/', '');
+            }).trim();
           } catch {
             baseBranch = 'main';
           }
@@ -145,13 +145,13 @@ export function registerWorktreeHandlers(
           return { success: false, error: 'No worktree found for this task' };
         }
 
-        // Get base branch
+        // Get base branch - the current branch in the main project (where changes will be merged)
         let baseBranch = 'main';
         try {
-          baseBranch = execSync('git rev-parse --abbrev-ref origin/HEAD 2>/dev/null || echo main', {
+          baseBranch = execSync('git rev-parse --abbrev-ref HEAD', {
             cwd: project.path,
             encoding: 'utf-8'
-          }).trim().replace('origin/', '');
+          }).trim();
         } catch {
           baseBranch = 'main';
         }
@@ -500,6 +500,21 @@ export function registerWorktreeHandlers(
 
               debug('Merge result. isStageOnly:', isStageOnly, 'newStatus:', newStatus, 'staged:', staged);
 
+              // Read suggested commit message if staging succeeded
+              let suggestedCommitMessage: string | undefined;
+              if (staged) {
+                const commitMsgPath = path.join(specDir, 'suggested_commit_message.txt');
+                try {
+                  if (existsSync(commitMsgPath)) {
+                    const { readFileSync } = require('fs');
+                    suggestedCommitMessage = readFileSync(commitMsgPath, 'utf-8').trim();
+                    debug('Read suggested commit message:', suggestedCommitMessage?.substring(0, 100));
+                  }
+                } catch (e) {
+                  debug('Failed to read suggested commit message:', e);
+                }
+              }
+
               // Persist the status change to implementation_plan.json
               const planPath = path.join(specDir, AUTO_BUILD_PATHS.IMPLEMENTATION_PLAN);
               try {
@@ -531,7 +546,8 @@ export function registerWorktreeHandlers(
                   success: true,
                   message,
                   staged,
-                  projectPath: staged ? project.path : undefined
+                  projectPath: staged ? project.path : undefined,
+                  suggestedCommitMessage
                 }
               });
             } else {
@@ -865,13 +881,13 @@ export function registerWorktreeHandlers(
               encoding: 'utf-8'
             }).trim();
 
-            // Get base branch
+            // Get base branch - the current branch in the main project (where changes will be merged)
             let baseBranch = 'main';
             try {
-              baseBranch = execSync('git rev-parse --abbrev-ref origin/HEAD 2>/dev/null || echo main', {
+              baseBranch = execSync('git rev-parse --abbrev-ref HEAD', {
                 cwd: project.path,
                 encoding: 'utf-8'
-              }).trim().replace('origin/', '');
+              }).trim();
             } catch {
               baseBranch = 'main';
             }

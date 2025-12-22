@@ -239,8 +239,8 @@ export interface ElectronAPI {
   getRoadmap: (projectId: string) => Promise<IPCResult<Roadmap | null>>;
   getRoadmapStatus: (projectId: string) => Promise<IPCResult<{ isRunning: boolean }>>;
   saveRoadmap: (projectId: string, roadmap: Roadmap) => Promise<IPCResult>;
-  generateRoadmap: (projectId: string, enableCompetitorAnalysis?: boolean) => void;
-  refreshRoadmap: (projectId: string, enableCompetitorAnalysis?: boolean) => void;
+  generateRoadmap: (projectId: string, enableCompetitorAnalysis?: boolean, refreshCompetitorAnalysis?: boolean) => void;
+  refreshRoadmap: (projectId: string, enableCompetitorAnalysis?: boolean, refreshCompetitorAnalysis?: boolean) => void;
   stopRoadmap: (projectId: string) => Promise<IPCResult>;
   updateFeatureStatus: (
     projectId: string,
@@ -319,7 +319,14 @@ export interface ElectronAPI {
   // GitHub OAuth operations (gh CLI)
   checkGitHubCli: () => Promise<IPCResult<{ installed: boolean; version?: string }>>;
   checkGitHubAuth: () => Promise<IPCResult<{ authenticated: boolean; username?: string }>>;
-  startGitHubAuth: () => Promise<IPCResult<{ success: boolean; message?: string }>>;
+  startGitHubAuth: () => Promise<IPCResult<{
+    success: boolean;
+    message?: string;
+    deviceCode?: string;
+    authUrl?: string;
+    browserOpened?: boolean;
+    fallbackUrl?: string;
+  }>>;
   getGitHubToken: () => Promise<IPCResult<{ token: string }>>;
   getGitHubUser: () => Promise<IPCResult<{ username: string; name?: string }>>;
   listGitHubUserRepos: () => Promise<IPCResult<{ repos: Array<{ fullName: string; description: string | null; isPrivate: boolean }> }>>;

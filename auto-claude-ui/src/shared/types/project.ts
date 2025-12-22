@@ -186,30 +186,60 @@ export interface GraphitiConnectionTestResult {
 }
 
 // Graphiti Provider Types (Memory System V2)
-export type GraphitiProviderType = 'openai' | 'anthropic' | 'google' | 'groq' | 'ollama';
-export type GraphitiEmbeddingProvider = 'openai' | 'voyage' | 'google' | 'huggingface' | 'ollama';
+// LLM Providers: OpenAI, Anthropic, Azure OpenAI, Ollama (local), Google, Groq
+export type GraphitiLLMProvider = 'openai' | 'anthropic' | 'azure_openai' | 'ollama' | 'google' | 'groq';
+// Embedding Providers: OpenAI, Voyage AI, Azure OpenAI, Ollama (local), Google, HuggingFace
+export type GraphitiEmbeddingProvider = 'openai' | 'voyage' | 'azure_openai' | 'ollama' | 'google' | 'huggingface';
+
+// Legacy type alias for backward compatibility
+export type GraphitiProviderType = GraphitiLLMProvider;
 
 export interface GraphitiProviderConfig {
   // LLM Provider
-  llmProvider: GraphitiProviderType;
+  llmProvider: GraphitiLLMProvider;
   llmModel?: string;  // Model name, uses provider default if not specified
 
   // Embedding Provider
   embeddingProvider: GraphitiEmbeddingProvider;
   embeddingModel?: string;  // Embedding model, uses provider default if not specified
 
-  // Provider-specific API keys (stored securely)
+  // OpenAI settings
   openaiApiKey?: string;
-  anthropicApiKey?: string;
-  googleApiKey?: string;
-  groqApiKey?: string;
-  voyageApiKey?: string;
+  openaiModel?: string;
+  openaiEmbeddingModel?: string;
 
-  // Ollama-specific config (local LLM, no API key required)
+  // Anthropic settings (LLM only - needs separate embedder)
+  anthropicApiKey?: string;
+  anthropicModel?: string;
+
+  // Azure OpenAI settings
+  azureOpenaiApiKey?: string;
+  azureOpenaiBaseUrl?: string;
+  azureOpenaiLlmDeployment?: string;
+  azureOpenaiEmbeddingDeployment?: string;
+
+  // Voyage AI settings (embeddings only - commonly used with Anthropic)
+  voyageApiKey?: string;
+  voyageEmbeddingModel?: string;
+
+  // Google AI settings (LLM and embeddings)
+  googleApiKey?: string;
+  googleLlmModel?: string;
+  googleEmbeddingModel?: string;
+
+  // Ollama settings (local LLM, no API key required)
   ollamaBaseUrl?: string;  // Default: http://localhost:11434
   ollamaLlmModel?: string;
   ollamaEmbeddingModel?: string;
   ollamaEmbeddingDim?: number;
+
+  // Groq settings
+  groqApiKey?: string;
+  groqModel?: string;
+
+  // HuggingFace settings (embeddings only)
+  huggingfaceApiKey?: string;
+  huggingfaceEmbeddingModel?: string;
 
   // FalkorDB connection (required for all providers)
   falkorDbHost?: string;
@@ -283,6 +313,9 @@ export interface ProjectEnvConfig {
   githubToken?: string;
   githubRepo?: string; // Format: owner/repo
   githubAutoSync?: boolean; // Auto-sync issues on project load
+
+  // Git/Worktree Settings
+  defaultBranch?: string; // Base branch for worktree creation (e.g., 'main', 'develop')
 
   // Graphiti Memory Integration (V2 - Multi-provider support)
   graphitiEnabled: boolean;

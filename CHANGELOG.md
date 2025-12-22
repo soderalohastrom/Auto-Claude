@@ -1,3 +1,162 @@
+## 2.6.0 - Improved User Experience and Agent Configuration
+
+### ✨ New Features
+
+- Add customizable phase configuration in app settings, allowing users to tailor the AI build pipeline to their workflow
+
+- Implement parallel AI merge functionality for faster integration of completed builds
+
+- Add Google AI as LLM and embedding provider for Graphiti memory system
+
+- Implement device code authentication flow with timeout handling, browser launch fallback, and comprehensive testing
+
+### 🛠️ Improvements
+
+- Move Agent Profiles from dashboard to Settings for better organization and discoverability
+
+- Default agent profile to 'Auto (Optimized)' for streamlined out-of-the-box experience
+
+- Enhance WorkspaceStatus component UI with improved visual design
+
+- Refactor task management from sidebar to modal interface for cleaner navigation
+
+- Add comprehensive theme system with multiple color schemes (Forest, Neo, Retro, Dusk, Ocean, Lime) and light/dark mode support
+
+- Extract human-readable feature titles from spec.md for better task identification
+
+- Improve task description display for specs with compact markdown formatting
+
+### 🐛 Bug Fixes
+
+- Fix asyncio coroutine creation in worker threads to properly support async operations
+
+- Improve UX for phase configuration in task creation workflow
+
+- Address CodeRabbit PR #69 feedback and additional review comments
+
+- Fix auto-close behavior for task modal when marking tasks as done
+
+- Resolve Python lint errors and import sorting issues (ruff I001 compliance)
+
+- Ensure planner agent properly writes implementation_plan.json
+
+- Add platform detection for terminal profile commands on Windows
+
+- Set default selected agent profile to 'auto' across all users
+
+- Fix display of correct merge target branch in worktree UI
+
+- Add validation for invalid colorTheme fallback to prevent UI errors
+
+- Remove outdated Sun/Moon toggle button from sidebar
+
+---
+
+## What's Changed
+
+- feat: add customizable phase configuration in app settings by @AndyMik90 in aee0ba4
+
+- feat: implement parallel AI merge functionality by @AndyMik90 in 458d4bb
+
+- feat(graphiti): add Google AI as LLM and embedding provider by @adryserage in fe69106
+
+- fix: create coroutine inside worker thread for asyncio.run by @AndyMik90 in f89e4e6
+
+- fix: improve UX for phase configuration in task creation by @AndyMik90 in b9797cb
+
+- fix: address CodeRabbit PR #69 feedback by @AndyMik90 in cc38a06
+
+- fix: sort imports in workspace.py to pass ruff I001 check by @AndyMik90 in 9981ee4
+
+- fix(ui): auto-close task modal when marking task as done by @AndyMik90 in 297d380
+
+- fix: resolve Python lint errors in workspace.py by @AndyMik90 in 0506256
+
+- refactor: move Agent Profiles from dashboard to Settings by @AndyMik90 in 1094990
+
+- fix(planning): ensure planner agent writes implementation_plan.json by @AndyMik90 in 9ab5a4f
+
+- fix(windows): add platform detection for terminal profile commands by @AndyMik90 in f0a6a0a
+
+- fix: default agent profile to 'Auto (Optimized)' for all users by @AndyMik90 in 08aa2ff
+
+- fix: update default selected agent profile to 'auto' by @AndyMik90 in 37ace0a
+
+- style: enhance WorkspaceStatus component UI by @AndyMik90 in 3092155
+
+- fix: display correct merge target branch in worktree UI by @AndyMik90 in 2b96160
+
+- Improvement/refactor task sidebar to task modal by @AndyMik90 in 2a96f85
+
+- fix: extract human-readable title from spec.md when feature field is spec ID by @AndyMik90 in 8b59375
+
+- fix: task descriptions not showing for specs with compact markdown by @AndyMik90 in 7f12ef0
+
+- Add comprehensive theme system with Forest, Neo, Retro, Dusk, Ocean, and Lime color schemes by @AndyMik90 in ba776a3, e2b24e2, 7589046, e248256, 76c1bd7, bcbced2
+
+- Add ColorTheme type and configuration to app settings by @AndyMik90 in 2ca89ce, c505d6e, a75c0a9
+
+- Implement device code authentication flow with timeout handling and fallback URL display by @AndyMik90 in 5f26d39, 81e1536, 1a7cf40, 4a4ad6b, 6a4c1b4, b75a09c, e134c4c
+
+- fix(graphiti): address CodeRabbit review comments by @adryserage in 679b8cd
+
+- fix(lint): sort imports in Google provider files by @adryserage in 1a38a06
+
+## 2.6.0 - Multi-Provider Graphiti Support & Platform Fixes
+
+### ✨ New Features
+
+- **Google AI Provider for Graphiti**: Full Google AI (Gemini) support for both LLM and embeddings in the Memory Layer
+  - Add GoogleLLMClient with gemini-2.0-flash default model
+  - Add GoogleEmbedder with text-embedding-004 default model
+  - UI integration for Google API key configuration with link to Google AI Studio
+- **Ollama LLM Provider in UI**: Add Ollama as an LLM provider option in Graphiti onboarding wizard
+  - Ollama runs locally and doesn't require an API key
+  - Configure Base URL instead of API key for local inference
+- **LLM Provider Selection UI**: Add provider selection dropdown to Graphiti setup wizard for flexible backend configuration
+- **Per-Project GitHub Configuration**: UI clarity improvements for per-project GitHub org/repo settings
+
+### 🛠️ Improvements
+
+- Enhanced Graphiti provider factory to support Google AI alongside existing providers
+- Updated env-handlers to properly populate graphitiProviderConfig from .env files
+- Improved type definitions with proper Graphiti provider config properties in AppSettings
+- Better API key loading when switching between providers in settings
+
+### 🐛 Bug Fixes
+
+- **node-pty Migration**: Replaced node-pty with @lydell/node-pty for prebuilt Windows binaries
+  - Updated all imports to use @lydell/node-pty directly
+  - Fixed "Cannot find module 'node-pty'" startup error
+- **GitHub Organization Support**: Fixed repository support for GitHub organization accounts
+  - Add defensive array validation for GitHub issues API response
+- **Asyncio Deprecation**: Fixed asyncio deprecation warning by using get_running_loop() instead of get_event_loop()
+- Applied ruff formatting and fixed import sorting (I001) in Google provider files
+
+### 🔧 Other Changes
+
+- Added google-generativeai dependency to requirements.txt
+- Updated provider validation to include Google/Groq/HuggingFace type assertions
+
+---
+
+## What's Changed
+
+- fix(graphiti): address CodeRabbit review comments by @adryserage in 679b8cd
+- fix(lint): sort imports in Google provider files by @adryserage in 1a38a06
+- feat(graphiti): add Google AI as LLM and embedding provider by @adryserage in fe69106
+- fix: GitHub organization repository support by @mojaray2k in 873cafa
+- feat(ui): add LLM provider selection to Graphiti onboarding by @adryserage in 4750869
+- fix(types): add missing AppSettings properties for Graphiti providers by @adryserage in 6680ed4
+- feat(ui): add Ollama as LLM provider option for Graphiti by @adryserage in a3eee92
+- fix(ui): address PR review feedback for Graphiti provider selection by @adryserage in b8a419a
+- fix(deps): update imports to use @lydell/node-pty directly by @adryserage in 2b61ebb
+- fix(deps): replace node-pty with @lydell/node-pty for prebuilt binaries by @adryserage in e1aee6a
+- fix: add UI clarity for per-project GitHub configuration by @mojaray2k in c9745b6
+- fix: add defensive array validation for GitHub issues API response by @mojaray2k in b3636a5
+
+---
+
 ## 2.5.5 - Enhanced Agent Reliability & Build Workflow
 
 ### ✨ New Features

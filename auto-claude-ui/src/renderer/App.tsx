@@ -17,7 +17,7 @@ import {
 } from './components/ui/tooltip';
 import { Sidebar, type SidebarView } from './components/Sidebar';
 import { KanbanBoard } from './components/KanbanBoard';
-import { TaskDetailPanel } from './components/TaskDetailPanel';
+import { TaskDetailModal } from './components/task-detail/TaskDetailModal';
 import { TaskCreationWizard } from './components/TaskCreationWizard';
 import { AppSettingsDialog, type AppSection } from './components/settings/AppSettings';
 import type { ProjectSettingsSection } from './components/settings/ProjectSettingsContent';
@@ -29,7 +29,6 @@ import { Insights } from './components/Insights';
 import { GitHubIssues } from './components/GitHubIssues';
 import { Changelog } from './components/Changelog';
 import { Worktrees } from './components/Worktrees';
-import { AgentProfiles } from './components/AgentProfiles';
 import { WelcomeScreen } from './components/WelcomeScreen';
 import { RateLimitModal } from './components/RateLimitModal';
 import { SDKRateLimitModal } from './components/SDKRateLimitModal';
@@ -43,7 +42,8 @@ import { useTaskStore, loadTasks } from './stores/task-store';
 import { useSettingsStore, loadSettings } from './stores/settings-store';
 import { useTerminalStore, restoreTerminalSessions } from './stores/terminal-store';
 import { useIpcListeners } from './hooks/useIpc';
-import type { Task, Project } from '../shared/types';
+import { COLOR_THEMES } from '../shared/constants';
+import type { Task, Project, ColorTheme } from '../shared/types';
 
 export function App() {
   // Load IPC listeners for real-time updates
@@ -177,20 +177,37 @@ export function App() {
 
   // Apply theme on load
   useEffect(() => {
+    const root = document.documentElement;
+
     const applyTheme = () => {
+      // Apply light/dark mode
       if (settings.theme === 'dark') {
-        document.documentElement.classList.add('dark');
+        root.classList.add('dark');
       } else if (settings.theme === 'light') {
-        document.documentElement.classList.remove('dark');
+        root.classList.remove('dark');
       } else {
         // System preference
         if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-          document.documentElement.classList.add('dark');
+          root.classList.add('dark');
         } else {
-          document.documentElement.classList.remove('dark');
+          root.classList.remove('dark');
         }
       }
     };
+
+    // Apply color theme via data-theme attribute
+    // Validate colorTheme against known themes, fallback to 'default' if invalid
+    const validThemeIds = COLOR_THEMES.map((t) => t.id);
+    const rawColorTheme = settings.colorTheme ?? 'default';
+    const colorTheme: ColorTheme = validThemeIds.includes(rawColorTheme as ColorTheme)
+      ? (rawColorTheme as ColorTheme)
+      : 'default';
+
+    if (colorTheme === 'default') {
+      root.removeAttribute('data-theme');
+    } else {
+      root.setAttribute('data-theme', colorTheme);
+    }
 
     applyTheme();
 
@@ -206,7 +223,7 @@ export function App() {
     return () => {
       mediaQuery.removeEventListener('change', handleChange);
     };
-  }, [settings.theme]);
+  }, [settings.theme, settings.colorTheme]);
 
   // Update selected task when tasks change (for real-time updates)
   useEffect(() => {
@@ -301,10 +318,16 @@ export function App() {
     if (!gitHubSetupProject) return;
 
     try {
+      // NOTE: settings.githubToken is a GitHub access token (from gh CLI),
+      // NOT a Claude Code OAuth token. They are different things:
+      // - GitHub token: for GitHub API access (repo operations)
+      // - Claude token: for Claude AI access (run.py, roadmap, etc.)
+      // The user needs to separately authenticate with Claude using 'claude setup-token'
+
       // Update project env config with GitHub settings
       await window.electronAPI.updateProjectEnv(gitHubSetupProject.id, {
         githubEnabled: true,
-        githubToken: settings.githubToken,
+        githubToken: settings.githubToken, // GitHub token for repo access
         githubRepo: settings.githubRepo
       });
 
@@ -438,9 +461,6 @@ export function App() {
                 {activeView === 'worktrees' && selectedProjectId && (
                   <Worktrees projectId={selectedProjectId} />
                 )}
-                {activeView === 'agent-profiles' && (
-                  <AgentProfiles />
-                )}
                 {activeView === 'agent-tools' && (
                   <div className="flex h-full items-center justify-center">
                     <div className="text-center">
@@ -463,10 +483,12 @@ export function App() {
           </main>
         </div>
 
-        {/* Task detail panel */}
-        {selectedTask && (
-          <TaskDetailPanel task={selectedTask} onClose={handleCloseTaskDetail} />
-        )}
+        {/* Task detail modal */}
+        <TaskDetailModal
+          open={!!selectedTask}
+          task={selectedTask}
+          onOpenChange={(open) => !open && handleCloseTaskDetail()}
+        />
 
         {/* Dialogs */}
         {selectedProjectId && (

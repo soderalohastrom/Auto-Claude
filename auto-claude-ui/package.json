@@ -1,6 +1,6 @@
 {
   "name": "auto-claude-ui",
-  "version": "2.5.5",
+  "version": "2.6.5",
   "description": "Desktop UI for Auto Claude autonomous coding framework",
   "main": "./out/main/index.js",
   "author": "Auto Claude Team",
@@ -8,15 +8,17 @@
   "scripts": {
     "postinstall": "node scripts/postinstall.js",
     "dev": "electron-vite dev",
+    "dev:mcp": "electron-vite dev -- --remote-debugging-port=9222",
     "build": "electron-vite build",
     "start": "electron .",
+    "start:mcp": "electron . --remote-debugging-port=9222",
     "preview": "electron-vite preview",
     "package": "electron-vite build && electron-builder",
     "package:mac": "electron-vite build && electron-builder --mac",
     "package:win": "electron-vite build && electron-builder --win",
     "package:linux": "electron-vite build && electron-builder --linux",
-    "start:packaged:mac": "open dist/mac-arm64/Auto\\ Claude.app || open dist/mac/Auto\\ Claude.app",
-    "start:packaged:win": "start \"\" \"dist\\win-unpacked\\Auto Claude.exe\"",
+    "start:packaged:mac": "open dist/mac-arm64/Auto-Claude.app || open dist/mac/Auto-Claude.app",
+    "start:packaged:win": "start \"\" \"dist\\win-unpacked\\Auto-Claude.exe\"",
     "start:packaged:linux": "./dist/linux-unpacked/auto-claude",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -115,7 +117,7 @@
   },
   "build": {
     "appId": "com.autoclaude.ui",
-    "productName": "Auto Claude",
+    "productName": "Auto-Claude",
     "publish": [
       {
         "provider": "github",
