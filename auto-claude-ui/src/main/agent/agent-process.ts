@@ -1,15 +1,20 @@
-import { spawn } from 'child_process';
-import path from 'path';
-import { existsSync, readFileSync } from 'fs';
-import { app } from 'electron';
-import { EventEmitter } from 'events';
-import { AgentState } from './agent-state';
-import { AgentEvents } from './agent-events';
-import { ProcessType, ExecutionProgressData } from './types';
-import { detectRateLimit, createSDKRateLimitInfo, getProfileEnv, detectAuthFailure } from '../rate-limit-detector';
-import { projectStore } from '../project-store';
-import { getClaudeProfileManager } from '../claude-profile-manager';
-import { findPythonCommand, parsePythonCommand } from '../python-detector';
+import { spawn } from "child_process";
+import path from "path";
+import { existsSync, readFileSync } from "fs";
+import { app } from "electron";
+import { EventEmitter } from "events";
+import { AgentState } from "./agent-state";
+import { AgentEvents } from "./agent-events";
+import { ProcessType, ExecutionProgressData } from "./types";
+import {
+  detectRateLimit,
+  createSDKRateLimitInfo,
+  getProfileEnv,
+  detectAuthFailure,
+} from "../rate-limit-detector";
+import { projectStore } from "../project-store";
+import { getClaudeProfileManager } from "../claude-profile-manager";
+import { findPythonCommand, parsePythonCommand } from "../python-detector";
 
 /**
  * Process spawning and lifecycle management
@@ -19,8 +24,8 @@ export class AgentProcessManager {
   private events: AgentEvents;
   private emitter: EventEmitter;
   // Auto-detect Python command on initialization
-  private pythonPath: string = findPythonCommand() || 'python';
-  private autoBuildSourcePath: string = '';
+  private pythonPath: string = findPythonCommand() || "python";
+  private autoBuildSourcePath: string = "";
 
   constructor(state: AgentState, events: AgentEvents, emitter: EventEmitter) {
     this.state = state;
@@ -59,16 +64,16 @@ export class AgentProcessManager {
     // Auto-detect from app location
     const possiblePaths = [
       // Dev mode: from dist/main -> ../../auto-claude (sibling to auto-claude-ui)
-      path.resolve(__dirname, '..', '..', '..', 'auto-claude'),
+      path.resolve(__dirname, "..", "..", "..", "auto-claude"),
       // Alternative: from app root
-      path.resolve(app.getAppPath(), '..', 'auto-claude'),
+      path.resolve(app.getAppPath(), "..", "auto-claude"),
       // If running from repo root
-      path.resolve(process.cwd(), 'auto-claude')
+      path.resolve(process.cwd(), "auto-claude"),
     ];
 
     for (const p of possiblePaths) {
       // Use requirements.txt as marker - it always exists in auto-claude source
-      if (existsSync(p) && existsSync(path.join(p, 'requirements.txt'))) {
+      if (existsSync(p) && existsSync(path.join(p, "requirements.txt"))) {
         return p;
       }
     }
@@ -88,8 +93,9 @@ export class AgentProcessManager {
     if (project?.settings) {
       // Graphiti MCP integration
       if (project.settings.graphitiMcpEnabled) {
-        const graphitiUrl = project.settings.graphitiMcpUrl || 'http://localhost:8000/mcp/';
-        env['GRAPHITI_MCP_URL'] = graphitiUrl;
+        const graphitiUrl =
+          project.settings.graphitiMcpUrl || "http://localhost:9000/sse";
+        env["GRAPHITI_MCP_URL"] = graphitiUrl;
       }
     }
 
@@ -105,31 +111,33 @@ export class AgentProcessManager {
       return {};
     }
 
-    const envPath = path.join(autoBuildSource, '.env');
+    const envPath = path.join(autoBuildSource, ".env");
     if (!existsSync(envPath)) {
       return {};
     }
 
     try {
-      const envContent = readFileSync(envPath, 'utf-8');
+      const envContent = readFileSync(envPath, "utf-8");
       const envVars: Record<string, string> = {};
 
       // Handle both Unix (\n) and Windows (\r\n) line endings
       for (const line of envContent.split(/\r?\n/)) {
         const trimmed = line.trim();
         // Skip comments and empty lines
-        if (!trimmed || trimmed.startsWith('#')) {
+        if (!trimmed || trimmed.startsWith("#")) {
           continue;
         }
 
-        const eqIndex = trimmed.indexOf('=');
+        const eqIndex = trimmed.indexOf("=");
         if (eqIndex > 0) {
           const key = trimmed.substring(0, eqIndex).trim();
           let value = trimmed.substring(eqIndex + 1).trim();
 
           // Remove quotes if present
-          if ((value.startsWith('"') && value.endsWith('"')) ||
-              (value.startsWith("'") && value.endsWith("'"))) {
+          if (
+            (value.startsWith('"') && value.endsWith('"')) ||
+            (value.startsWith("'") && value.endsWith("'"))
+          ) {
             value = value.slice(1, -1);
           }
 
@@ -151,9 +159,9 @@ export class AgentProcessManager {
     cwd: string,
     args: string[],
     extraEnv: Record<string, string> = {},
-    processType: ProcessType = 'task-execution'
+    processType: ProcessType = "task-execution",
   ): void {
-    const isSpecRunner = processType === 'spec-creation';
+    const isSpecRunner = processType === "spec-creation";
     // Kill existing process for this task if any
     this.killProcess(taskId);
 
@@ -171,40 +179,48 @@ export class AgentProcessManager {
         ...process.env,
         ...extraEnv,
         ...profileEnv, // Include active Claude profile config
-        PYTHONUNBUFFERED: '1', // Ensure real-time output
-        PYTHONIOENCODING: 'utf-8', // Ensure UTF-8 encoding on Windows
-        PYTHONUTF8: '1' // Force Python UTF-8 mode on Windows (Python 3.7+)
-      }
+        PYTHONUNBUFFERED: "1", // Ensure real-time output
+        PYTHONIOENCODING: "utf-8", // Ensure UTF-8 encoding on Windows
+        PYTHONUTF8: "1", // Force Python UTF-8 mode on Windows (Python 3.7+)
+      },
     });
 
     this.state.addProcess(taskId, {
       taskId,
       process: childProcess,
       startedAt: new Date(),
-      spawnId
+      spawnId,
     });
 
     // Track execution progress
-    let currentPhase: ExecutionProgressData['phase'] = isSpecRunner ? 'planning' : 'planning';
+    let currentPhase: ExecutionProgressData["phase"] = isSpecRunner
+      ? "planning"
+      : "planning";
     let phaseProgress = 0;
     let currentSubtask: string | undefined;
     let lastMessage: string | undefined;
     // Collect all output for rate limit detection
-    let allOutput = '';
+    let allOutput = "";
 
     // Emit initial progress
-    this.emitter.emit('execution-progress', taskId, {
+    this.emitter.emit("execution-progress", taskId, {
       phase: currentPhase,
       phaseProgress: 0,
       overallProgress: this.events.calculateOverallProgress(currentPhase, 0),
-      message: isSpecRunner ? 'Starting spec creation...' : 'Starting build process...'
+      message: isSpecRunner
+        ? "Starting spec creation..."
+        : "Starting build process...",
     });
 
     const processLog = (log: string) => {
       // Collect output for rate limit detection (keep last 10KB)
       allOutput = (allOutput + log).slice(-10000);
       // Parse for phase transitions
-      const phaseUpdate = this.events.parseExecutionPhase(log, currentPhase, isSpecRunner);
+      const phaseUpdate = this.events.parseExecutionPhase(
+        log,
+        currentPhase,
+        isSpecRunner,
+      );
 
       if (phaseUpdate) {
         const phaseChanged = phaseUpdate.phase !== currentPhase;
@@ -224,22 +240,25 @@ export class AgentProcessManager {
           phaseProgress = Math.min(90, phaseProgress + 5); // Increment within phase
         }
 
-        const overallProgress = this.events.calculateOverallProgress(currentPhase, phaseProgress);
+        const overallProgress = this.events.calculateOverallProgress(
+          currentPhase,
+          phaseProgress,
+        );
 
-        this.emitter.emit('execution-progress', taskId, {
+        this.emitter.emit("execution-progress", taskId, {
           phase: currentPhase,
           phaseProgress,
           overallProgress,
           currentSubtask,
-          message: lastMessage
+          message: lastMessage,
         });
       }
     };
 
     // Handle stdout - explicitly decode as UTF-8 for cross-platform Unicode support
-    childProcess.stdout?.on('data', (data: Buffer) => {
-      const log = data.toString('utf8');
-      this.emitter.emit('log', taskId, log);
+    childProcess.stdout?.on("data", (data: Buffer) => {
+      const log = data.toString("utf8");
+      this.emitter.emit("log", taskId, log);
       processLog(log);
       // Print to console when DEBUG is enabled (visible in pnpm dev terminal)
       if (['true', '1', 'yes', 'on'].includes(process.env.DEBUG?.toLowerCase() ?? '')) {
@@ -248,11 +267,11 @@ export class AgentProcessManager {
     });
 
     // Handle stderr - explicitly decode as UTF-8 for cross-platform Unicode support
-    childProcess.stderr?.on('data', (data: Buffer) => {
-      const log = data.toString('utf8');
+    childProcess.stderr?.on("data", (data: Buffer) => {
+      const log = data.toString("utf8");
       // Some Python output goes to stderr (like progress bars)
       // so we treat it as log, not error
-      this.emitter.emit('log', taskId, log);
+      this.emitter.emit("log", taskId, log);
       processLog(log);
       // Print to console when DEBUG is enabled (visible in pnpm dev terminal)
       if (['true', '1', 'yes', 'on'].includes(process.env.DEBUG?.toLowerCase() ?? '')) {
@@ -261,7 +280,7 @@ export class AgentProcessManager {
     });
 
     // Handle process exit
-    childProcess.on('exit', (code: number | null) => {
+    childProcess.on("exit", (code: number | null) => {
       this.state.deleteProcess(taskId);
 
       // Check if this specific spawn was killed (vs exited naturally)
@@ -279,78 +298,100 @@ export class AgentProcessManager {
           const profileManager = getClaudeProfileManager();
           const autoSwitchSettings = profileManager.getAutoSwitchSettings();
 
-          if (autoSwitchSettings.enabled && autoSwitchSettings.autoSwitchOnRateLimit) {
+          if (
+            autoSwitchSettings.enabled &&
+            autoSwitchSettings.autoSwitchOnRateLimit
+          ) {
             const currentProfileId = rateLimitDetection.profileId;
-            const bestProfile = profileManager.getBestAvailableProfile(currentProfileId);
+            const bestProfile =
+              profileManager.getBestAvailableProfile(currentProfileId);
 
             if (bestProfile) {
               // Switch active profile
               profileManager.setActiveProfile(bestProfile.id);
 
               // Emit swap info (for modal)
-              const source = processType === 'spec-creation' ? 'task' : 'task';
-              const rateLimitInfo = createSDKRateLimitInfo(source, rateLimitDetection, {
-                taskId
-              });
+              const source = processType === "spec-creation" ? "task" : "task";
+              const rateLimitInfo = createSDKRateLimitInfo(
+                source,
+                rateLimitDetection,
+                {
+                  taskId,
+                },
+              );
               rateLimitInfo.wasAutoSwapped = true;
               rateLimitInfo.swappedToProfile = {
                 id: bestProfile.id,
-                name: bestProfile.name
+                name: bestProfile.name,
               };
-              rateLimitInfo.swapReason = 'reactive';
-              this.emitter.emit('sdk-rate-limit', rateLimitInfo);
+              rateLimitInfo.swapReason = "reactive";
+              this.emitter.emit("sdk-rate-limit", rateLimitInfo);
 
               // Restart task
-              this.emitter.emit('auto-swap-restart-task', taskId, bestProfile.id);
+              this.emitter.emit(
+                "auto-swap-restart-task",
+                taskId,
+                bestProfile.id,
+              );
               return;
             }
           }
 
           // Fall back to manual modal (no auto-swap or no alternative profile)
-          const source = processType === 'spec-creation' ? 'task' : 'task';
-          const rateLimitInfo = createSDKRateLimitInfo(source, rateLimitDetection, {
-            taskId
-          });
-          this.emitter.emit('sdk-rate-limit', rateLimitInfo);
+          const source = processType === "spec-creation" ? "task" : "task";
+          const rateLimitInfo = createSDKRateLimitInfo(
+            source,
+            rateLimitDetection,
+            {
+              taskId,
+            },
+          );
+          this.emitter.emit("sdk-rate-limit", rateLimitInfo);
         } else {
           // Not rate limited - check for authentication failure
           const authFailureDetection = detectAuthFailure(allOutput);
           if (authFailureDetection.isAuthFailure) {
-            this.emitter.emit('auth-failure', taskId, {
+            this.emitter.emit("auth-failure", taskId, {
               profileId: authFailureDetection.profileId,
               failureType: authFailureDetection.failureType,
               message: authFailureDetection.message,
-              originalError: authFailureDetection.originalError
+              originalError: authFailureDetection.originalError,
             });
           }
         }
       }
 
       // Emit final progress
-      const finalPhase = code === 0 ? 'complete' : 'failed';
-      this.emitter.emit('execution-progress', taskId, {
+      const finalPhase = code === 0 ? "complete" : "failed";
+      this.emitter.emit("execution-progress", taskId, {
         phase: finalPhase,
         phaseProgress: 100,
-        overallProgress: code === 0 ? 100 : this.events.calculateOverallProgress(currentPhase, phaseProgress),
-        message: code === 0 ? 'Process completed successfully' : `Process exited with code ${code}`
+        overallProgress:
+          code === 0
+            ? 100
+            : this.events.calculateOverallProgress(currentPhase, phaseProgress),
+        message:
+          code === 0
+            ? "Process completed successfully"
+            : `Process exited with code ${code}`,
       });
 
-      this.emitter.emit('exit', taskId, code, processType);
+      this.emitter.emit("exit", taskId, code, processType);
     });
 
     // Handle process error
-    childProcess.on('error', (err: Error) => {
-      console.error('[AgentProcess] Process error:', err.message);
+    childProcess.on("error", (err: Error) => {
+      console.error("[AgentProcess] Process error:", err.message);
       this.state.deleteProcess(taskId);
 
-      this.emitter.emit('execution-progress', taskId, {
-        phase: 'failed',
+      this.emitter.emit("execution-progress", taskId, {
+        phase: "failed",
         phaseProgress: 0,
         overallProgress: 0,
-        message: `Error: ${err.message}`
+        message: `Error: ${err.message}`,
       });
 
-      this.emitter.emit('error', taskId, err.message);
+      this.emitter.emit("error", taskId, err.message);
     });
   }
 
@@ -365,12 +406,12 @@ export class AgentProcessManager {
         this.state.markSpawnAsKilled(agentProcess.spawnId);
 
         // Send SIGTERM first for graceful shutdown
-        agentProcess.process.kill('SIGTERM');
+        agentProcess.process.kill("SIGTERM");
 
         // Force kill after timeout
         setTimeout(() => {
           if (!agentProcess.process.killed) {
-            agentProcess.process.kill('SIGKILL');
+            agentProcess.process.kill("SIGKILL");
           }
         }, 5000);
 
