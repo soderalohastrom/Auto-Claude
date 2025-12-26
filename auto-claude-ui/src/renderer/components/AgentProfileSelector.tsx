@@ -7,40 +7,66 @@
  *
  * Used in TaskCreationWizard and TaskEditDialog.
  */
-import { useState } from 'react';
-import { Brain, Scale, Zap, Sliders, Sparkles, ChevronDown, ChevronUp, Pencil } from 'lucide-react';
-import { Label } from './ui/label';
+import { useState } from "react";
+import {
+  Brain,
+  Scale,
+  Zap,
+  Sliders,
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+  Pencil,
+} from "lucide-react";
+import { Label } from "./ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
-} from './ui/select';
+  SelectValue,
+} from "./ui/select";
 import {
   DEFAULT_AGENT_PROFILES,
   AVAILABLE_MODELS,
   THINKING_LEVELS,
   DEFAULT_PHASE_MODELS,
-  DEFAULT_PHASE_THINKING
-} from '../../shared/constants';
-import type { ModelType, ThinkingLevel } from '../../shared/types';
-import type { PhaseModelConfig, PhaseThinkingConfig } from '../../shared/types/settings';
-import { cn } from '../lib/utils';
+  DEFAULT_PHASE_THINKING,
+} from "../../shared/constants";
+
+// Z.ai (Anthropic-compatible) models.
+// These are UI-only options that set the "model" string in task metadata.
+// To actually route calls to Z.ai, you must set (per project):
+//   ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic
+//   ANTHROPIC_AUTH_TOKEN=...
+const ZAI_MODELS = [
+  { value: "glm-4.7", label: "Z.ai GLM 4.7" },
+  { value: "glm-4.5-air", label: "Z.ai GLM 4.5 Air" },
+] as const;
+import type { ModelType, ThinkingLevel } from "../../shared/types";
+import type {
+  PhaseModelConfig,
+  PhaseThinkingConfig,
+} from "../../shared/types/settings";
+import { cn } from "../lib/utils";
 
 interface AgentProfileSelectorProps {
   /** Currently selected profile ID ('auto', 'complex', 'balanced', 'quick', or 'custom') */
   profileId: string;
   /** Current model value (fallback for non-auto profiles) */
-  model: ModelType | '';
+  model: ModelType | "";
   /** Current thinking level value (fallback for non-auto profiles) */
-  thinkingLevel: ThinkingLevel | '';
+  thinkingLevel: ThinkingLevel | "";
   /** Phase model configuration (for auto profile) */
   phaseModels?: PhaseModelConfig;
   /** Phase thinking configuration (for auto profile) */
   phaseThinking?: PhaseThinkingConfig;
   /** Called when profile selection changes */
-  onProfileChange: (profileId: string, model: ModelType, thinkingLevel: ThinkingLevel) => void;
+  onProfileChange: (
+    profileId: string,
+    model: ModelType,
+    thinkingLevel: ThinkingLevel,
+  ) => void;
   /** Called when model changes (in custom mode) */
   onModelChange: (model: ModelType) => void;
   /** Called when thinking level changes (in custom mode) */
@@ -57,14 +83,23 @@ const iconMap: Record<string, React.ElementType> = {
   Brain,
   Scale,
   Zap,
-  Sparkles
+  Sparkles,
 };
 
-const PHASE_LABELS: Record<keyof PhaseModelConfig, { label: string; description: string }> = {
-  spec: { label: 'Spec Creation', description: 'Discovery, requirements, context gathering' },
-  planning: { label: 'Planning', description: 'Implementation planning and architecture' },
-  coding: { label: 'Coding', description: 'Actual code implementation' },
-  qa: { label: 'QA Review', description: 'Quality assurance and validation' }
+const PHASE_LABELS: Record<
+  keyof PhaseModelConfig,
+  { label: string; description: string }
+> = {
+  spec: {
+    label: "Spec Creation",
+    description: "Discovery, requirements, context gathering",
+  },
+  planning: {
+    label: "Planning",
+    description: "Implementation planning and architecture",
+  },
+  coding: { label: "Coding", description: "Actual code implementation" },
+  qa: { label: "QA Review", description: "Quality assurance and validation" },
 };
 
 export function AgentProfileSelector({
@@ -78,26 +113,30 @@ export function AgentProfileSelector({
   onThinkingLevelChange,
   onPhaseModelsChange,
   onPhaseThinkingChange,
-  disabled
+  disabled,
 }: AgentProfileSelectorProps) {
   const [showPhaseDetails, setShowPhaseDetails] = useState(false);
 
-  const isCustom = profileId === 'custom';
-  const isAuto = profileId === 'auto';
+  const isCustom = profileId === "custom";
+  const isAuto = profileId === "auto";
 
   // Use provided phase configs or defaults
   const currentPhaseModels = phaseModels || DEFAULT_PHASE_MODELS;
   const currentPhaseThinking = phaseThinking || DEFAULT_PHASE_THINKING;
 
   const handleProfileSelect = (selectedId: string) => {
-    if (selectedId === 'custom') {
+    if (selectedId === "custom") {
       // Keep current model/thinking level, just mark as custom
-      onProfileChange('custom', model as ModelType || 'sonnet', thinkingLevel as ThinkingLevel || 'medium');
-    } else if (selectedId === 'auto') {
+      onProfileChange(
+        "custom",
+        (model as ModelType) || "sonnet",
+        (thinkingLevel as ThinkingLevel) || "medium",
+      );
+    } else if (selectedId === "auto") {
       // Auto profile - set defaults
-      const autoProfile = DEFAULT_AGENT_PROFILES.find(p => p.id === 'auto');
+      const autoProfile = DEFAULT_AGENT_PROFILES.find((p) => p.id === "auto");
       if (autoProfile) {
-        onProfileChange('auto', autoProfile.model, autoProfile.thinkingLevel);
+        onProfileChange("auto", autoProfile.model, autoProfile.thinkingLevel);
         // Initialize phase configs with defaults if callback provided
         if (onPhaseModelsChange && autoProfile.phaseModels) {
           onPhaseModelsChange(autoProfile.phaseModels);
@@ -107,27 +146,33 @@ export function AgentProfileSelector({
         }
       }
     } else {
-      const profile = DEFAULT_AGENT_PROFILES.find(p => p.id === selectedId);
+      const profile = DEFAULT_AGENT_PROFILES.find((p) => p.id === selectedId);
       if (profile) {
         onProfileChange(profile.id, profile.model, profile.thinkingLevel);
       }
     }
   };
 
-  const handlePhaseModelChange = (phase: keyof PhaseModelConfig, value: ModelType) => {
+  const handlePhaseModelChange = (
+    phase: keyof PhaseModelConfig,
+    value: ModelType,
+  ) => {
     if (onPhaseModelsChange) {
       onPhaseModelsChange({
         ...currentPhaseModels,
-        [phase]: value
+        [phase]: value,
       });
     }
   };
 
-  const handlePhaseThinkingChange = (phase: keyof PhaseThinkingConfig, value: ThinkingLevel) => {
+  const handlePhaseThinkingChange = (
+    phase: keyof PhaseThinkingConfig,
+    value: ThinkingLevel,
+  ) => {
     if (onPhaseThinkingChange) {
       onPhaseThinkingChange({
         ...currentPhaseThinking,
-        [phase]: value
+        [phase]: value,
       });
     }
   };
@@ -137,23 +182,23 @@ export function AgentProfileSelector({
     if (isCustom) {
       return {
         icon: Sliders,
-        label: 'Custom Configuration',
-        description: 'Choose model & thinking level'
+        label: "Custom Configuration",
+        description: "Choose model & thinking level",
       };
     }
-    const profile = DEFAULT_AGENT_PROFILES.find(p => p.id === profileId);
+    const profile = DEFAULT_AGENT_PROFILES.find((p) => p.id === profileId);
     if (profile) {
       return {
-        icon: iconMap[profile.icon || 'Scale'] || Scale,
+        icon: iconMap[profile.icon || "Scale"] || Scale,
         label: profile.name,
-        description: profile.description
+        description: profile.description,
       };
     }
     // Default to auto profile (the actual default)
     return {
       icon: Sparkles,
-      label: 'Auto (Optimized)',
-      description: 'Uses Opus across all phases with optimized thinking levels'
+      label: "Auto (Optimized)",
+      description: "Uses Opus across all phases with optimized thinking levels",
     };
   };
 
@@ -163,7 +208,10 @@ export function AgentProfileSelector({
     <div className="space-y-4">
       {/* Agent Profile Selection */}
       <div className="space-y-2">
-        <Label htmlFor="agent-profile" className="text-sm font-medium text-foreground">
+        <Label
+          htmlFor="agent-profile"
+          className="text-sm font-medium text-foreground"
+        >
           Agent Profile
         </Label>
         <Select
@@ -181,8 +229,10 @@ export function AgentProfileSelector({
           </SelectTrigger>
           <SelectContent>
             {DEFAULT_AGENT_PROFILES.map((profile) => {
-              const ProfileIcon = iconMap[profile.icon || 'Scale'] || Scale;
-              const modelLabel = AVAILABLE_MODELS.find(m => m.value === profile.model)?.label;
+              const ProfileIcon = iconMap[profile.icon || "Scale"] || Scale;
+              const modelLabel = AVAILABLE_MODELS.find(
+                (m) => m.value === profile.model,
+              )?.label;
               return (
                 <SelectItem key={profile.id} value={profile.id}>
                   <div className="flex items-center gap-2">
@@ -191,9 +241,8 @@ export function AgentProfileSelector({
                       <span className="font-medium">{profile.name}</span>
                       <span className="ml-2 text-xs text-muted-foreground">
                         {profile.isAutoProfile
-                          ? '(per-phase optimization)'
-                          : `(${modelLabel} + ${profile.thinkingLevel})`
-                        }
+                          ? "(per-phase optimization)"
+                          : `(${modelLabel} + ${profile.thinkingLevel})`}
                       </span>
                     </div>
                   </div>
@@ -213,9 +262,7 @@ export function AgentProfileSelector({
             </SelectItem>
           </SelectContent>
         </Select>
-        <p className="text-xs text-muted-foreground">
-          {display.description}
-        </p>
+        <p className="text-xs text-muted-foreground">{display.description}</p>
       </div>
 
       {/* Auto Profile - Phase Configuration */}
@@ -226,14 +273,16 @@ export function AgentProfileSelector({
             type="button"
             onClick={() => setShowPhaseDetails(!showPhaseDetails)}
             className={cn(
-              'flex w-full items-center justify-between p-4 text-left',
-              'hover:bg-muted/50 transition-colors',
-              !disabled && 'cursor-pointer'
+              "flex w-full items-center justify-between p-4 text-left",
+              "hover:bg-muted/50 transition-colors",
+              !disabled && "cursor-pointer",
             )}
             disabled={disabled}
           >
             <div className="flex items-center gap-2">
-              <span className="font-medium text-sm text-foreground">Phase Configuration</span>
+              <span className="font-medium text-sm text-foreground">
+                Phase Configuration
+              </span>
               {!showPhaseDetails && (
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Pencil className="h-3 w-3" />
@@ -252,11 +301,22 @@ export function AgentProfileSelector({
           {!showPhaseDetails && (
             <div className="px-4 pb-4 -mt-1">
               <div className="grid grid-cols-2 gap-2 text-xs">
-                {(Object.keys(PHASE_LABELS) as Array<keyof PhaseModelConfig>).map((phase) => {
-                  const modelLabel = AVAILABLE_MODELS.find(m => m.value === currentPhaseModels[phase])?.label?.replace('Claude ', '') || currentPhaseModels[phase];
+                {(
+                  Object.keys(PHASE_LABELS) as Array<keyof PhaseModelConfig>
+                ).map((phase) => {
+                  const modelLabel =
+                    AVAILABLE_MODELS.find(
+                      (m) => m.value === currentPhaseModels[phase],
+                    )?.label?.replace("Claude ", "") ||
+                    currentPhaseModels[phase];
                   return (
-                    <div key={phase} className="flex items-center justify-between rounded bg-background/50 px-2 py-1">
-                      <span className="text-muted-foreground">{PHASE_LABELS[phase].label}:</span>
+                    <div
+                      key={phase}
+                      className="flex items-center justify-between rounded bg-background/50 px-2 py-1"
+                    >
+                      <span className="text-muted-foreground">
+                        {PHASE_LABELS[phase].label}:
+                      </span>
                       <span className="font-medium">{modelLabel}</span>
                     </div>
                   );
@@ -268,58 +328,82 @@ export function AgentProfileSelector({
           {/* Detailed Phase Configuration */}
           {showPhaseDetails && (
             <div className="px-4 pb-4 space-y-4 border-t border-border pt-4">
-              {(Object.keys(PHASE_LABELS) as Array<keyof PhaseModelConfig>).map((phase) => (
-                <div key={phase} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs font-medium text-foreground">
-                      {PHASE_LABELS[phase].label}
-                    </Label>
-                    <span className="text-[10px] text-muted-foreground">
-                      {PHASE_LABELS[phase].description}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <Label className="text-[10px] text-muted-foreground">Model</Label>
-                      <Select
-                        value={currentPhaseModels[phase]}
-                        onValueChange={(value) => handlePhaseModelChange(phase, value as ModelType)}
-                        disabled={disabled}
-                      >
-                        <SelectTrigger className="h-8 text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {AVAILABLE_MODELS.map((m) => (
-                            <SelectItem key={m.value} value={m.value}>
-                              {m.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+              {(Object.keys(PHASE_LABELS) as Array<keyof PhaseModelConfig>).map(
+                (phase) => (
+                  <div key={phase} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-medium text-foreground">
+                        {PHASE_LABELS[phase].label}
+                      </Label>
+                      <span className="text-[10px] text-muted-foreground">
+                        {PHASE_LABELS[phase].description}
+                      </span>
                     </div>
-                    <div className="space-y-1">
-                      <Label className="text-[10px] text-muted-foreground">Thinking</Label>
-                      <Select
-                        value={currentPhaseThinking[phase]}
-                        onValueChange={(value) => handlePhaseThinkingChange(phase, value as ThinkingLevel)}
-                        disabled={disabled}
-                      >
-                        <SelectTrigger className="h-8 text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {THINKING_LEVELS.map((level) => (
-                            <SelectItem key={level.value} value={level.value}>
-                              {level.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <Label className="text-[10px] text-muted-foreground">
+                          Model
+                        </Label>
+                        <Select
+                          value={currentPhaseModels[phase]}
+                          onValueChange={(value) =>
+                            handlePhaseModelChange(phase, value as ModelType)
+                          }
+                          disabled={disabled}
+                        >
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {AVAILABLE_MODELS.map((m) => (
+                              <SelectItem key={m.value} value={m.value}>
+                                {m.label}
+                              </SelectItem>
+                            ))}
+
+                            {/* Z.ai models (per-task selection)
+                              Note: this only sets the model string in the task metadata.
+                              To actually route traffic to Z.ai, enable the per-project Z.ai endpoint toggle
+                              (or set ANTHROPIC_BASE_URL / ANTHROPIC_AUTH_TOKEN in the project .env).
+                          */}
+                            {ZAI_MODELS.map((m) => (
+                              <SelectItem key={m.value} value={m.value}>
+                                {m.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] text-muted-foreground">
+                          Thinking
+                        </Label>
+                        <Select
+                          value={currentPhaseThinking[phase]}
+                          onValueChange={(value) =>
+                            handlePhaseThinkingChange(
+                              phase,
+                              value as ThinkingLevel,
+                            )
+                          }
+                          disabled={disabled}
+                        >
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {THINKING_LEVELS.map((level) => (
+                              <SelectItem key={level.value} value={level.value}>
+                                {level.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ),
+              )}
             </div>
           )}
         </div>
@@ -330,7 +414,10 @@ export function AgentProfileSelector({
         <div className="space-y-4 rounded-lg border border-border bg-muted/30 p-4">
           {/* Model Selection */}
           <div className="space-y-2">
-            <Label htmlFor="custom-model" className="text-xs font-medium text-muted-foreground">
+            <Label
+              htmlFor="custom-model"
+              className="text-xs font-medium text-muted-foreground"
+            >
               Model
             </Label>
             <Select
@@ -353,12 +440,17 @@ export function AgentProfileSelector({
 
           {/* Thinking Level Selection */}
           <div className="space-y-2">
-            <Label htmlFor="custom-thinking" className="text-xs font-medium text-muted-foreground">
+            <Label
+              htmlFor="custom-thinking"
+              className="text-xs font-medium text-muted-foreground"
+            >
               Thinking Level
             </Label>
             <Select
               value={thinkingLevel}
-              onValueChange={(value) => onThinkingLevelChange(value as ThinkingLevel)}
+              onValueChange={(value) =>
+                onThinkingLevelChange(value as ThinkingLevel)
+              }
               disabled={disabled}
             >
               <SelectTrigger id="custom-thinking" className="h-9">
