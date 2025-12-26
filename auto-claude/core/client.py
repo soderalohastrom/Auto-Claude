@@ -252,6 +252,18 @@ def create_client(
         json.dump(security_settings, f, indent=2)
 
     print(f"Security settings: {settings_file}")
+
+    # LLM Provider Detection & Logging
+    base_url = os.environ.get("ANTHROPIC_BASE_URL", "")
+    is_zai = "z.ai" in base_url.lower()
+    if is_zai:
+        print(f"   - LLM Provider: Z.ai GLM-4.7 (Anthropic-Compatible)")
+        print(f"   - API Endpoint: {base_url}")
+        # Z.ai GLM-4.7 supports thinking mode. If max_thinking_tokens is set,
+        # it maps to Z.ai's Deep Thinking capability.
+    else:
+        print(f"   - LLM Provider: Anthropic (Native)")
+
     print("   - Sandbox enabled (OS-level bash isolation)")
     print(f"   - Filesystem restricted to: {project_dir.resolve()}")
     print("   - Bash commands restricted to allowlist")

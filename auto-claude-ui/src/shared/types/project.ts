@@ -14,13 +14,23 @@ export interface Project {
 
 export interface ProjectSettings {
   model: string;
-  memoryBackend: 'graphiti' | 'file';
+  memoryBackend: "graphiti" | "file";
   linearSync: boolean;
   linearTeamId?: string;
   notifications: NotificationSettings;
-  /** Enable Graphiti MCP server for agent-accessible knowledge graph */
+  /**
+   * Legacy flag (pre-v2.7.0): Enable Graphiti MCP server for agent-accessible knowledge graph.
+   *
+   * NOTE: As of v2.7.0+, Auto-Claude uses an embedded graph database (LadybugDB) for memory.
+   * No external MCP server URL is required for memory storage/query in the UI.
+   */
   graphitiMcpEnabled: boolean;
-  /** Graphiti MCP server URL (default: http://localhost:8000/mcp/) */
+  /**
+   * Legacy field (pre-v2.7.0): Graphiti MCP server URL.
+   *
+   * NOTE: Kept only for backward compatibility with older project settings.
+   * If present, it will be ignored by the modern embedded-memory flow.
+   */
   graphitiMcpUrl?: string;
   /** Main branch name for worktree creation (default: auto-detected or 'main') */
   mainBranch?: string;
@@ -39,7 +49,7 @@ export interface NotificationSettings {
 
 export interface ProjectIndex {
   project_root: string;
-  project_type: 'single' | 'monorepo';
+  project_type: "single" | "monorepo";
   services: Record<string, ServiceInfo>;
   infrastructure: InfrastructureInfo;
   conventions: ConventionsInfo;
@@ -50,7 +60,14 @@ export interface ServiceInfo {
   path: string;
   language?: string;
   framework?: string;
-  type?: 'backend' | 'frontend' | 'worker' | 'scraper' | 'library' | 'proxy' | 'unknown';
+  type?:
+    | "backend"
+    | "frontend"
+    | "worker"
+    | "scraper"
+    | "library"
+    | "proxy"
+    | "unknown";
   package_manager?: string;
   default_port?: number;
   entry_point?: string;
@@ -69,11 +86,14 @@ export interface ServiceInfo {
   consumes?: string[];
   environment?: {
     detected_count: number;
-    variables: Record<string, {
-      type: string;
-      sensitive: boolean;
-      required: boolean;
-    }>;
+    variables: Record<
+      string,
+      {
+        type: string;
+        sensitive: boolean;
+        required: boolean;
+      }
+    >;
   };
   api?: {
     total_routes: number;
@@ -86,10 +106,13 @@ export interface ServiceInfo {
   database?: {
     total_models: number;
     model_names: string[];
-    models: Record<string, {
-      orm: string;
-      fields: Record<string, unknown>;
-    }>;
+    models: Record<
+      string,
+      {
+        orm: string;
+        fields: Record<string, unknown>;
+      }
+    >;
   };
   services?: {
     databases?: Array<{
@@ -178,16 +201,27 @@ export interface GraphitiConnectionTestResult {
 // Memory Provider Types
 // Embedding Providers: OpenAI, Voyage AI, Azure OpenAI, Ollama (local), Google
 // Note: LLM provider removed - Claude SDK handles RAG queries
-export type GraphitiEmbeddingProvider = 'openai' | 'voyage' | 'azure_openai' | 'ollama' | 'google';
+export type GraphitiEmbeddingProvider =
+  | "openai"
+  | "voyage"
+  | "azure_openai"
+  | "ollama"
+  | "google";
 
 // Legacy type aliases for backward compatibility
-export type GraphitiLLMProvider = 'openai' | 'anthropic' | 'azure_openai' | 'ollama' | 'google' | 'groq';
+export type GraphitiLLMProvider =
+  | "openai"
+  | "anthropic"
+  | "azure_openai"
+  | "ollama"
+  | "google"
+  | "groq";
 export type GraphitiProviderType = GraphitiLLMProvider;
 
 export interface GraphitiProviderConfig {
   // Embedding Provider (LLM provider removed - Claude SDK handles RAG)
   embeddingProvider: GraphitiEmbeddingProvider;
-  embeddingModel?: string;  // Embedding model, uses provider default if not specified
+  embeddingModel?: string; // Embedding model, uses provider default if not specified
 
   // OpenAI Embeddings
   openaiApiKey?: string;
@@ -207,13 +241,13 @@ export interface GraphitiProviderConfig {
   googleEmbeddingModel?: string;
 
   // Ollama Embeddings (local, no API key required)
-  ollamaBaseUrl?: string;  // Default: http://localhost:11434
+  ollamaBaseUrl?: string; // Default: http://localhost:11434
   ollamaEmbeddingModel?: string;
   ollamaEmbeddingDim?: number;
 
   // LadybugDB settings (embedded database - no Docker required)
-  database?: string;  // Database name (default: auto_claude_memory)
-  dbPath?: string;    // Database storage path (default: ~/.auto-claude/memories)
+  database?: string; // Database name (default: auto_claude_memory)
+  dbPath?: string; // Database storage path (default: ~/.auto-claude/memories)
 }
 
 export interface GraphitiProviderInfo {
@@ -237,7 +271,13 @@ export interface GraphitiMemoryState {
 
 export interface MemoryEpisode {
   id: string;
-  type: 'session_insight' | 'codebase_discovery' | 'codebase_map' | 'pattern' | 'gotcha' | 'task_outcome';
+  type:
+    | "session_insight"
+    | "codebase_discovery"
+    | "codebase_map"
+    | "pattern"
+    | "gotcha"
+    | "task_outcome";
   timestamp: string;
   content: string;
   session_number?: number;
@@ -263,12 +303,16 @@ export interface ProjectContextData {
 export interface ProjectEnvConfig {
   // Claude Authentication
   claudeOAuthToken?: string;
-  claudeAuthStatus: 'authenticated' | 'token_set' | 'not_configured';
+  claudeAuthStatus: "authenticated" | "token_set" | "not_configured";
   // Indicates if the Claude token is from global settings (not project-specific)
   claudeTokenIsGlobal?: boolean;
 
   // Model Override
   autoBuildModel?: string;
+
+  // Anthropic Custom Endpoint (e.g. Z.ai GLM4.7)
+  anthropicBaseUrl?: string;
+  anthropicAuthToken?: string;
 
   // Linear Integration
   linearEnabled: boolean;
@@ -289,7 +333,7 @@ export interface ProjectEnvConfig {
   // Graphiti Memory Integration (V2 - Multi-provider support)
   // Uses LadybugDB embedded database (no Docker required, Python 3.12+)
   graphitiEnabled: boolean;
-  graphitiProviderConfig?: GraphitiProviderConfig;  // Provider configuration
+  graphitiProviderConfig?: GraphitiProviderConfig; // Provider configuration
   // Legacy fields (still supported for backward compatibility)
   openaiApiKey?: string;
   // Indicates if the OpenAI key is from global settings (not project-specific)
