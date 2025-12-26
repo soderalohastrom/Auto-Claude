@@ -1,12 +1,19 @@
-import type { Project, ProjectSettings as ProjectSettingsType, AutoBuildVersionInfo, ProjectEnvConfig, LinearSyncStatus, GitHubSyncStatus } from '../../../../shared/types';
-import { SettingsSection } from '../SettingsSection';
-import { GeneralSettings } from '../../project-settings/GeneralSettings';
-import { EnvironmentSettings } from '../../project-settings/EnvironmentSettings';
-import { SecuritySettings } from '../../project-settings/SecuritySettings';
-import { LinearIntegration } from '../integrations/LinearIntegration';
-import { GitHubIntegration } from '../integrations/GitHubIntegration';
-import { InitializationGuard } from '../common/InitializationGuard';
-import type { ProjectSettingsSection } from '../ProjectSettingsContent';
+import type {
+  Project,
+  ProjectSettings as ProjectSettingsType,
+  AutoBuildVersionInfo,
+  ProjectEnvConfig,
+  LinearSyncStatus,
+  GitHubSyncStatus,
+} from "../../../../shared/types";
+import { SettingsSection } from "../SettingsSection";
+import { GeneralSettings } from "../../project-settings/GeneralSettings";
+import { EnvironmentSettings } from "../../project-settings/EnvironmentSettings";
+import { SecuritySettings } from "../../project-settings/SecuritySettings";
+import { LinearIntegration } from "../integrations/LinearIntegration";
+import { GitHubIntegration } from "../integrations/GitHubIntegration";
+import { InitializationGuard } from "../common/InitializationGuard";
+import type { ProjectSettingsSection } from "../ProjectSettingsContent";
 
 interface SectionRouterProps {
   activeSection: ProjectSettingsSection;
@@ -31,7 +38,11 @@ interface SectionRouterProps {
   gitHubConnectionStatus: GitHubSyncStatus | null;
   isCheckingGitHub: boolean;
   isCheckingClaudeAuth: boolean;
-  claudeAuthStatus: 'checking' | 'authenticated' | 'not_authenticated' | 'error';
+  claudeAuthStatus:
+    | "checking"
+    | "authenticated"
+    | "not_authenticated"
+    | "error";
   linearConnectionStatus: LinearSyncStatus | null;
   isCheckingLinear: boolean;
   handleInitialize: () => Promise<void>;
@@ -73,10 +84,10 @@ export function SectionRouter({
   handleInitialize,
   handleUpdate,
   handleClaudeSetup,
-  onOpenLinearImport
+  onOpenLinearImport,
 }: SectionRouterProps) {
   switch (activeSection) {
-    case 'general':
+    case "general":
       return (
         <SettingsSection
           title="General"
@@ -91,11 +102,13 @@ export function SectionRouter({
             isUpdating={isUpdating}
             handleInitialize={handleInitialize}
             handleUpdate={handleUpdate}
+            envConfig={envConfig}
+            onUpdateEnvConfig={updateEnvConfig}
           />
         </SettingsSection>
       );
 
-    case 'claude':
+    case "claude":
       return (
         <SettingsSection
           title="Claude Authentication"
@@ -123,7 +136,7 @@ export function SectionRouter({
         </SettingsSection>
       );
 
-    case 'linear':
+    case "linear":
       return (
         <SettingsSection
           title="Linear Integration"
@@ -147,7 +160,7 @@ export function SectionRouter({
         </SettingsSection>
       );
 
-    case 'github':
+    case "github":
       return (
         <SettingsSection
           title="GitHub Integration"
@@ -171,7 +184,7 @@ export function SectionRouter({
         </SettingsSection>
       );
 
-    case 'memory':
+    case "memory":
       return (
         <SettingsSection
           title="Memory"

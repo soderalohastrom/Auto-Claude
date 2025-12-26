@@ -21,6 +21,7 @@ import type {
   Project,
   ProjectSettings as ProjectSettingsType,
   AutoBuildVersionInfo,
+  ProjectEnvConfig,
 } from "../../../shared/types";
 
 interface GeneralSettingsProps {
@@ -32,6 +33,13 @@ interface GeneralSettingsProps {
   isUpdating: boolean;
   handleInitialize: () => Promise<void>;
   handleUpdate: () => Promise<void>;
+
+  /**
+   * Environment config for this project (.auto-claude/.env)
+   * We use this (not ProjectSettings) to store per-project endpoint overrides like Z.ai.
+   */
+  envConfig: ProjectEnvConfig | null;
+  onUpdateEnvConfig: (updates: Partial<ProjectEnvConfig>) => void;
 }
 
 export function GeneralSettings({
@@ -43,6 +51,8 @@ export function GeneralSettings({
   isUpdating,
   handleInitialize,
   handleUpdate: _handleUpdate,
+  envConfig,
+  onUpdateEnvConfig,
 }: GeneralSettingsProps) {
   return (
     <>
@@ -124,6 +134,82 @@ export function GeneralSettings({
             <h3 className="text-sm font-semibold text-foreground">
               Agent Configuration
             </h3>
+
+            {/* Z.ai per-project endpoint toggle (high visibility) */}
+            <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label className="text-sm font-medium text-foreground">
+                    Use Z.ai endpoint for this project
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Routes agent LLM calls through Z.ai’s Anthropic-compatible
+                    endpoint for this project only. This does not affect other
+                    apps or global settings.
+                  </p>
+                </div>
+                <Switch
+                  checked={Boolean(envConfig?.anthropicBaseUrl)}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      onUpdateEnvConfig({
+                        anthropicBaseUrl: "https://api.z.ai/api/anthropic",
+                      });
+                    } else {
+                      onUpdateEnvConfig({
+                        anthropicBaseUrl: undefined,
+                        anthropicAuthToken: undefined,
+                      });
+                    }
+                  }}
+                />
+              </div>
+
+              {/* Show endpoint + token only when enabled */}
+              {Boolean(envConfig?.anthropicBaseUrl) && (
+                <div className="space-y-3 pt-3 border-t border-border">
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">
+                      ANTHROPIC_BASE_URL
+                    </Label>
+                    <input
+                      className="h-9 w-full rounded-md border border-border bg-background px-3 py-1 text-sm text-foreground"
+                      value={
+                        envConfig?.anthropicBaseUrl ||
+                        "https://api.z.ai/api/anthropic"
+                      }
+                      onChange={(e) =>
+                        onUpdateEnvConfig({
+                          anthropicBaseUrl: e.target.value,
+                        })
+                      }
+                      placeholder="https://api.z.ai/api/anthropic"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">
+                      ANTHROPIC_AUTH_TOKEN (Z.ai)
+                    </Label>
+                    <input
+                      className="h-9 w-full rounded-md border border-border bg-background px-3 py-1 text-sm text-foreground"
+                      value={envConfig?.anthropicAuthToken || ""}
+                      onChange={(e) =>
+                        onUpdateEnvConfig({
+                          anthropicAuthToken: e.target.value,
+                        })
+                      }
+                      placeholder="paste your Z.ai token here…"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Tip: You already validated this works via{" "}
+                      <code>./test_zai_anthropic_proxy.sh</code>.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="space-y-2">
               <Label
                 htmlFor="model"
@@ -147,11 +233,9 @@ export function GeneralSettings({
                     </SelectItem>
                   ))}
 
-                  {/* Z.ai (Anthropic-compatible) models (UI-only options)
-                      These do NOT change any global model typing; they simply set the model string
-                      stored in project settings. To actually route traffic to Z.ai, configure:
-                        - ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic
-                        - ANTHROPIC_AUTH_TOKEN=...
+                  {/* Z.ai models (per-project)
+                      Selecting these sets the model string passed to the Claude Code CLI.
+                      To route traffic to Z.ai, enable the toggle above and set the token.
                   */}
                   <SelectItem value="glm-4.7">Z.ai GLM 4.7</SelectItem>
                   <SelectItem value="glm-4.5-air">Z.ai GLM 4.5 Air</SelectItem>
