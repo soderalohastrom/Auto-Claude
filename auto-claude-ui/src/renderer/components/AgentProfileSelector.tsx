@@ -289,6 +289,25 @@ export function AgentProfileSelector({
                   <span>Click to customize</span>
                 </span>
               )}
+              {showPhaseDetails && onPhaseModelsChange && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPhaseModelsChange({
+                      spec: "glm-4.7" as ModelType,
+                      planning: "glm-4.7" as ModelType,
+                      coding: "glm-4.7" as ModelType,
+                      qa: "glm-4.7" as ModelType,
+                    } as PhaseModelConfig);
+                  }}
+                  disabled={disabled}
+                  className="ml-2 px-2 py-0.5 text-[10px] font-medium text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded border border-purple-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  title="Set all phases to Z.ai GLM 4.7 for maximum cost savings"
+                >
+                  Use Z.ai GLM 4.7 for all phases
+                </button>
+              )}
             </div>
             {showPhaseDetails ? (
               <ChevronUp className="h-4 w-4 text-muted-foreground" />
