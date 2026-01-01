@@ -13,9 +13,9 @@ from typing import Literal, TypedDict
 # Model shorthand to full model ID mapping
 MODEL_ID_MAP: dict[str, str] = {
     # Z.ai GLM Mappings (ACTIVE - using cheaper Z.ai models)
-    "opus": "glm-4.7",
-    "sonnet": "glm-4.7",
-    "haiku": "glm-4.5-air",
+    "opus": "GLM-4.7",
+    "sonnet": "GLM-4.7",
+    "haiku": "GLM-4.5-Air",
     # Claude Mappings (Commented out for "rich day")
     # "opus": "claude-opus-4-5-20251101",
     # "sonnet": "claude-sonnet-4-5-20250929",
