@@ -26,8 +26,8 @@ export const PROVIDER_CONFIGS: Record<LLMProvider, ProviderConfig> = {
     name: "Z.ai (GLM)",
     baseUrl: "https://api.z.ai/v1",
     apiKeyEnvVar: "ZAI_API_KEY",
-    defaultModel: "glm-4-7-latest",
-    fastModel: "glm-4-5-air-latest",
+    defaultModel: "glm-4.7",
+    fastModel: "glm-4.5-air",
   },
   minimax: {
     name: "MiniMax",
@@ -67,9 +67,9 @@ export const MODEL_ID_MAP: Record<
   ModelTypeShort,
   { id: string; provider: LLMProvider }
 > = {
-  opus: { id: "glm-4-7-latest", provider: "zai" },
+  opus: { id: "glm-4.7", provider: "zai" },
   sonnet: { id: "MiniMax-M2.1", provider: "minimax" },
-  haiku: { id: "glm-4-5-air-latest", provider: "zai" },
+  haiku: { id: "glm-4.5-air", provider: "zai" },
 } as const;
 
 // ============================================
