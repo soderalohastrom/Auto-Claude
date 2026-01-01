@@ -1,28 +1,41 @@
-import { useState } from 'react';
-import { Settings2, Save, Loader2 } from 'lucide-react';
-import { LinearTaskImportModal } from './LinearTaskImportModal';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
-import { Button } from './ui/button';
-import { Separator } from './ui/separator';
-import { updateProjectSettings, initializeProject, updateProjectAutoBuild, checkProjectVersion } from '../stores/project-store';
-import type { Project } from '../../shared/types';
+import { useState } from "react";
+import { Settings2, Save, Loader2 } from "lucide-react";
+import { LinearTaskImportModal } from "./LinearTaskImportModal";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
+import { Button } from "./ui/button";
+import { Separator } from "./ui/separator";
+import {
+  updateProjectSettings,
+  initializeProject,
+  updateProjectAutoBuild,
+  checkProjectVersion,
+} from "../stores/project-store";
+import type { Project } from "../../shared/types";
 
 // Import custom hooks
-import { useProjectSettings } from '../hooks/useProjectSettings';
-import { useEnvironmentConfig } from '../hooks/useEnvironmentConfig';
-import { useClaudeAuth } from '../hooks/useClaudeAuth';
-import { useLinearConnection } from '../hooks/useLinearConnection';
-import { useGitHubConnection } from '../hooks/useGitHubConnection';
-import { useInfrastructureStatus } from '../hooks/useInfrastructureStatus';
+import { useProjectSettings } from "../hooks/useProjectSettings";
+import { useEnvironmentConfig } from "../hooks/useEnvironmentConfig";
+import { useClaudeAuth } from "../hooks/useClaudeAuth";
+import { useLinearConnection } from "../hooks/useLinearConnection";
+import { useGitHubConnection } from "../hooks/useGitHubConnection";
+import { useInfrastructureStatus } from "../hooks/useInfrastructureStatus";
 
 // Import section components
-import { AutoBuildIntegration } from './project-settings/AutoBuildIntegration';
-import { ClaudeAuthSection } from './project-settings/ClaudeAuthSection';
-import { LinearIntegrationSection } from './project-settings/LinearIntegrationSection';
-import { GitHubIntegrationSection } from './project-settings/GitHubIntegrationSection';
-import { MemoryBackendSection } from './project-settings/MemoryBackendSection';
-import { AgentConfigSection } from './project-settings/AgentConfigSection';
-import { NotificationsSection } from './project-settings/NotificationsSection';
+import { AutoBuildIntegration } from "./project-settings/AutoBuildIntegration";
+import { ClaudeAuthSection } from "./project-settings/ClaudeAuthSection";
+import { LLMProviderSwitcherSection } from "./project-settings/LLMProviderSwitcherSection";
+import { LinearIntegrationSection } from "./project-settings/LinearIntegrationSection";
+import { GitHubIntegrationSection } from "./project-settings/GitHubIntegrationSection";
+import { MemoryBackendSection } from "./project-settings/MemoryBackendSection";
+import { AgentConfigSection } from "./project-settings/AgentConfigSection";
+import { NotificationsSection } from "./project-settings/NotificationsSection";
 
 interface ProjectSettingsProps {
   project: Project;
@@ -30,22 +43,35 @@ interface ProjectSettingsProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function ProjectSettings({ project, open, onOpenChange }: ProjectSettingsProps) {
+export function ProjectSettings({
+  project,
+  open,
+  onOpenChange,
+}: ProjectSettingsProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showLinearImportModal, setShowLinearImportModal] = useState(false);
 
   // Collapsible sections state
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+  const [expandedSections, setExpandedSections] = useState<
+    Record<string, boolean>
+  >({
     claude: true,
+    llmProvider: false,
     linear: false,
     github: false,
-    graphiti: false
+    graphiti: false,
   });
 
   // Custom hooks for state management
-  const { settings, setSettings, versionInfo, setVersionInfo, isCheckingVersion } = useProjectSettings(project, open);
+  const {
+    settings,
+    setSettings,
+    versionInfo,
+    setVersionInfo,
+    isCheckingVersion,
+  } = useProjectSettings(project, open);
 
   const {
     envConfig,
@@ -57,36 +83,31 @@ export function ProjectSettings({ project, open, onOpenChange }: ProjectSettings
     isSavingEnv,
   } = useEnvironmentConfig(project.id, project.autoBuildPath, open);
 
-  const { isCheckingClaudeAuth, claudeAuthStatus, handleClaudeSetup } = useClaudeAuth(
-    project.id,
-    project.autoBuildPath,
-    open
-  );
+  const { isCheckingClaudeAuth, claudeAuthStatus, handleClaudeSetup } =
+    useClaudeAuth(project.id, project.autoBuildPath, open);
 
   const { linearConnectionStatus, isCheckingLinear } = useLinearConnection(
     project.id,
     envConfig?.linearEnabled,
-    envConfig?.linearApiKey
+    envConfig?.linearApiKey,
   );
 
   const { gitHubConnectionStatus, isCheckingGitHub } = useGitHubConnection(
     project.id,
     envConfig?.githubEnabled,
     envConfig?.githubToken,
-    envConfig?.githubRepo
+    envConfig?.githubRepo,
   );
 
-  const {
-    infrastructureStatus,
-    isCheckingInfrastructure,
-  } = useInfrastructureStatus(
-    envConfig?.graphitiEnabled,
-    envConfig?.graphitiDbPath,
-    open
-  );
+  const { infrastructureStatus, isCheckingInfrastructure } =
+    useInfrastructureStatus(
+      envConfig?.graphitiEnabled,
+      envConfig?.graphitiDbPath,
+      open,
+    );
 
   const toggleSection = (section: string) => {
-    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+    setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
   const handleInitialize = async () => {
@@ -104,10 +125,10 @@ export function ProjectSettings({ project, open, onOpenChange }: ProjectSettings
           setEnvConfig(envResult.data);
         }
       } else {
-        setError(result?.error || 'Failed to initialize');
+        setError(result?.error || "Failed to initialize");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setIsUpdating(false);
     }
@@ -123,10 +144,10 @@ export function ProjectSettings({ project, open, onOpenChange }: ProjectSettings
         const info = await checkProjectVersion(project.id);
         setVersionInfo(info);
       } else {
-        setError(result?.error || 'Failed to update');
+        setError(result?.error || "Failed to update");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setIsUpdating(false);
     }
@@ -140,22 +161,25 @@ export function ProjectSettings({ project, open, onOpenChange }: ProjectSettings
       // Save project settings
       const success = await updateProjectSettings(project.id, settings);
       if (!success) {
-        setError('Failed to save settings');
+        setError("Failed to save settings");
         return;
       }
 
       // Save env config if loaded
       if (envConfig) {
-        const envResult = await window.electronAPI.updateProjectEnv(project.id, envConfig);
+        const envResult = await window.electronAPI.updateProjectEnv(
+          project.id,
+          envConfig,
+        );
         if (!envResult.success) {
-          setError(envResult.error || 'Failed to save environment config');
+          setError(envResult.error || "Failed to save environment config");
           return;
         }
       }
 
       onOpenChange(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setIsSaving(false);
     }
@@ -200,7 +224,7 @@ export function ProjectSettings({ project, open, onOpenChange }: ProjectSettings
                 {/* Claude Authentication Section */}
                 <ClaudeAuthSection
                   isExpanded={expandedSections.claude}
-                  onToggle={() => toggleSection('claude')}
+                  onToggle={() => toggleSection("claude")}
                   envConfig={envConfig}
                   isLoadingEnv={isLoadingEnv}
                   envError={envError}
@@ -212,10 +236,22 @@ export function ProjectSettings({ project, open, onOpenChange }: ProjectSettings
 
                 <Separator />
 
+                {/* LLM Provider Switcher Section */}
+                <LLMProviderSwitcherSection
+                  isExpanded={expandedSections.llmProvider}
+                  onToggle={() => toggleSection("llmProvider")}
+                  envConfig={envConfig}
+                  isLoadingEnv={isLoadingEnv}
+                  envError={envError}
+                  onUpdateConfig={updateEnvConfig}
+                />
+
+                <Separator />
+
                 {/* Linear Integration Section */}
                 <LinearIntegrationSection
                   isExpanded={expandedSections.linear}
-                  onToggle={() => toggleSection('linear')}
+                  onToggle={() => toggleSection("linear")}
                   envConfig={envConfig}
                   onUpdateConfig={updateEnvConfig}
                   linearConnectionStatus={linearConnectionStatus}
@@ -228,7 +264,7 @@ export function ProjectSettings({ project, open, onOpenChange }: ProjectSettings
                 {/* GitHub Integration Section */}
                 <GitHubIntegrationSection
                   isExpanded={expandedSections.github}
-                  onToggle={() => toggleSection('github')}
+                  onToggle={() => toggleSection("github")}
                   envConfig={envConfig}
                   onUpdateConfig={updateEnvConfig}
                   gitHubConnectionStatus={gitHubConnectionStatus}
@@ -241,11 +277,13 @@ export function ProjectSettings({ project, open, onOpenChange }: ProjectSettings
                 {/* Memory Backend Section */}
                 <MemoryBackendSection
                   isExpanded={expandedSections.graphiti}
-                  onToggle={() => toggleSection('graphiti')}
+                  onToggle={() => toggleSection("graphiti")}
                   envConfig={envConfig}
                   settings={settings}
                   onUpdateConfig={updateEnvConfig}
-                  onUpdateSettings={(updates) => setSettings({ ...settings, ...updates })}
+                  onUpdateSettings={(updates) =>
+                    setSettings({ ...settings, ...updates })
+                  }
                   infrastructureStatus={infrastructureStatus}
                   isCheckingInfrastructure={isCheckingInfrastructure}
                 />
@@ -257,7 +295,9 @@ export function ProjectSettings({ project, open, onOpenChange }: ProjectSettings
             {/* Agent Settings */}
             <AgentConfigSection
               settings={settings}
-              onUpdateSettings={(updates) => setSettings({ ...settings, ...updates })}
+              onUpdateSettings={(updates) =>
+                setSettings({ ...settings, ...updates })
+              }
             />
 
             <Separator />
@@ -265,7 +305,9 @@ export function ProjectSettings({ project, open, onOpenChange }: ProjectSettings
             {/* Notifications */}
             <NotificationsSection
               settings={settings}
-              onUpdateSettings={(updates) => setSettings({ ...settings, ...updates })}
+              onUpdateSettings={(updates) =>
+                setSettings({ ...settings, ...updates })
+              }
             />
 
             {/* Error */}
@@ -304,7 +346,7 @@ export function ProjectSettings({ project, open, onOpenChange }: ProjectSettings
         onOpenChange={setShowLinearImportModal}
         onImportComplete={(result) => {
           // Optionally refresh or notify
-          console.warn('Import complete:', result);
+          console.warn("Import complete:", result);
         }}
       />
     </Dialog>

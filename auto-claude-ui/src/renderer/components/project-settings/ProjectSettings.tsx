@@ -1,21 +1,21 @@
-import { Settings2, Save, Loader2 } from 'lucide-react';
-import { LinearTaskImportModal } from '../LinearTaskImportModal';
+import { Settings2, Save, Loader2 } from "lucide-react";
+import { LinearTaskImportModal } from "../LinearTaskImportModal";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
-} from '../ui/dialog';
-import { Button } from '../ui/button';
-import { Separator } from '../ui/separator';
-import { GeneralSettings } from './GeneralSettings';
-import { EnvironmentSettings } from './EnvironmentSettings';
-import { IntegrationSettings } from './IntegrationSettings';
-import { SecuritySettings } from './SecuritySettings';
-import { useProjectSettings } from './hooks/useProjectSettings';
-import type { Project } from '../../../shared/types';
+  DialogTitle,
+} from "../ui/dialog";
+import { Button } from "../ui/button";
+import { Separator } from "../ui/separator";
+import { GeneralSettings } from "./GeneralSettings";
+import { EnvironmentSettings } from "./EnvironmentSettings";
+import { IntegrationSettings } from "./IntegrationSettings";
+import { SecuritySettings } from "./SecuritySettings";
+import { useProjectSettings } from "./hooks/useProjectSettings";
+import type { Project } from "../../../shared/types";
 
 interface ProjectSettingsProps {
   project: Project;
@@ -23,7 +23,11 @@ interface ProjectSettingsProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function ProjectSettings({ project, open, onOpenChange }: ProjectSettingsProps) {
+export function ProjectSettings({
+  project,
+  open,
+  onOpenChange,
+}: ProjectSettingsProps) {
   const hook = useProjectSettings(project, open);
 
   const {
@@ -60,7 +64,7 @@ export function ProjectSettings({ project, open, onOpenChange }: ProjectSettings
     handleInitialize,
     handleUpdate,
     handleClaudeSetup,
-    handleSave
+    handleSave,
   } = hook;
 
   return (
@@ -88,6 +92,8 @@ export function ProjectSettings({ project, open, onOpenChange }: ProjectSettings
               isUpdating={isUpdating}
               handleInitialize={handleInitialize}
               handleUpdate={handleUpdate}
+              envConfig={envConfig}
+              onUpdateEnvConfig={updateEnvConfig}
             />
 
             {/* Environment Configuration - Only show if initialized */}
@@ -107,7 +113,7 @@ export function ProjectSettings({ project, open, onOpenChange }: ProjectSettings
                   showClaudeToken={showClaudeToken}
                   setShowClaudeToken={setShowClaudeToken}
                   expanded={expandedSections.claude}
-                  onToggle={() => toggleSection('claude')}
+                  onToggle={() => toggleSection("claude")}
                 />
 
                 <Separator />
@@ -124,14 +130,14 @@ export function ProjectSettings({ project, open, onOpenChange }: ProjectSettings
                   linearConnectionStatus={linearConnectionStatus}
                   isCheckingLinear={isCheckingLinear}
                   linearExpanded={expandedSections.linear}
-                  onLinearToggle={() => toggleSection('linear')}
+                  onLinearToggle={() => toggleSection("linear")}
                   onOpenLinearImport={() => setShowLinearImportModal(true)}
                   showGitHubToken={showGitHubToken}
                   setShowGitHubToken={setShowGitHubToken}
                   gitHubConnectionStatus={gitHubConnectionStatus}
                   isCheckingGitHub={isCheckingGitHub}
                   githubExpanded={expandedSections.github}
-                  onGitHubToggle={() => toggleSection('github')}
+                  onGitHubToggle={() => toggleSection("github")}
                 />
 
                 <Separator />
@@ -145,7 +151,7 @@ export function ProjectSettings({ project, open, onOpenChange }: ProjectSettings
                   showOpenAIKey={showOpenAIKey}
                   setShowOpenAIKey={setShowOpenAIKey}
                   expanded={expandedSections.graphiti}
-                  onToggle={() => toggleSection('graphiti')}
+                  onToggle={() => toggleSection("graphiti")}
                 />
               </>
             )}
@@ -163,7 +169,10 @@ export function ProjectSettings({ project, open, onOpenChange }: ProjectSettings
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={() => handleSave(() => onOpenChange(false))} disabled={isSaving || isSavingEnv}>
+          <Button
+            onClick={() => handleSave(() => onOpenChange(false))}
+            disabled={isSaving || isSavingEnv}
+          >
             {isSaving || isSavingEnv ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -185,7 +194,7 @@ export function ProjectSettings({ project, open, onOpenChange }: ProjectSettings
         open={showLinearImportModal}
         onOpenChange={setShowLinearImportModal}
         onImportComplete={(result) => {
-          console.warn('Import complete:', result);
+          console.warn("Import complete:", result);
         }}
       />
     </Dialog>

@@ -83,6 +83,9 @@ dev/
 
 /docs
 
+# Local backup folder for deprecated Graphiti Docker tooling docs (local-only)
+.backup-graphiti-tools/
+
 _bmad
 _bmad-output
 

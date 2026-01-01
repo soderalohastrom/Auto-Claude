@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Terminal,
   Loader2,
@@ -16,13 +16,29 @@ import {
   Wrench,
   Info,
   Brain,
-  Cpu
-} from 'lucide-react';
-import { Badge } from '../ui/badge';
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../ui/collapsible';
-import { cn } from '../../lib/utils';
-import type { Task, TaskLogs, TaskLogPhase, TaskPhaseLog, TaskLogEntry, TaskMetadata } from '../../../shared/types';
-import type { PhaseModelConfig, PhaseThinkingConfig, ThinkingLevel, ModelTypeShort } from '../../../shared/types/settings';
+  Cpu,
+} from "lucide-react";
+import { Badge } from "../ui/badge";
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "../ui/collapsible";
+import { cn } from "../../lib/utils";
+import type {
+  Task,
+  TaskLogs,
+  TaskLogPhase,
+  TaskPhaseLog,
+  TaskLogEntry,
+  TaskMetadata,
+} from "../../../shared/types";
+import type {
+  PhaseModelConfig,
+  PhaseThinkingConfig,
+  ThinkingLevel,
+  ModelTypeShort,
+} from "../../../shared/types/settings";
 
 interface TaskLogsProps {
   task: Task;
@@ -37,71 +53,94 @@ interface TaskLogsProps {
 }
 
 const PHASE_LABELS: Record<TaskLogPhase, string> = {
-  planning: 'Planning',
-  coding: 'Coding',
-  validation: 'Validation'
+  planning: "Planning",
+  coding: "Coding",
+  validation: "Validation",
 };
 
 const PHASE_ICONS: Record<TaskLogPhase, typeof Pencil> = {
   planning: Pencil,
   coding: FileCode,
-  validation: FlaskConical
+  validation: FlaskConical,
 };
 
 const PHASE_COLORS: Record<TaskLogPhase, string> = {
-  planning: 'text-amber-500 bg-amber-500/10 border-amber-500/30',
-  coding: 'text-info bg-info/10 border-info/30',
-  validation: 'text-purple-500 bg-purple-500/10 border-purple-500/30'
+  planning: "text-amber-500 bg-amber-500/10 border-amber-500/30",
+  coding: "text-info bg-info/10 border-info/30",
+  validation: "text-purple-500 bg-purple-500/10 border-purple-500/30",
 };
 
 // Map log phases to config phase keys
 // Note: 'planning' log phase covers both spec creation and implementation planning
-const LOG_PHASE_TO_CONFIG_PHASE: Record<TaskLogPhase, keyof PhaseModelConfig> = {
-  planning: 'spec',  // Planning log phase primarily shows spec creation
-  coding: 'coding',
-  validation: 'qa'
-};
+const LOG_PHASE_TO_CONFIG_PHASE: Record<TaskLogPhase, keyof PhaseModelConfig> =
+  {
+    planning: "spec", // Planning log phase primarily shows spec creation
+    coding: "coding",
+    validation: "qa",
+  };
 
 // Short labels for models
 const MODEL_SHORT_LABELS: Record<ModelTypeShort, string> = {
-  opus: 'Opus',
-  sonnet: 'Sonnet',
-  haiku: 'Haiku'
+  opus: "Opus",
+  sonnet: "Sonnet",
+  haiku: "Haiku",
 };
+
+// Z.ai (Anthropic-compatible) model labels for non-auto profile task metadata.
+// Note: Phase models remain Claude-only (opus/sonnet/haiku), but individual tasks
+// can store a direct model string like "glm-4.7" when routing via ANTHROPIC_BASE_URL.
+const ZAI_MODEL_SHORT_LABELS: Record<string, string> = {
+  "glm-4.7": "GLM 4.7",
+  "glm-4.5-air": "GLM 4.5 Air",
+};
+
+// Safe helper: do NOT index MODEL_SHORT_LABELS with non-Claude model keys (e.g. glm-*).
+function getModelShortLabel(model: string): string {
+  return (
+    ZAI_MODEL_SHORT_LABELS[model] ||
+    MODEL_SHORT_LABELS[model as ModelTypeShort] ||
+    model
+  );
+}
 
 // Short labels for thinking levels
 const THINKING_SHORT_LABELS: Record<ThinkingLevel, string> = {
-  none: 'None',
-  low: 'Low',
-  medium: 'Med',
-  high: 'High',
-  ultrathink: 'Ultra'
+  none: "None",
+  low: "Low",
+  medium: "Med",
+  high: "High",
+  ultrathink: "Ultra",
 };
 
 // Helper to get model and thinking info for a log phase
 function getPhaseConfig(
   metadata: TaskMetadata | undefined,
-  logPhase: TaskLogPhase
+  logPhase: TaskLogPhase,
 ): { model: string; thinking: string } | null {
   if (!metadata) return null;
 
   const configPhase = LOG_PHASE_TO_CONFIG_PHASE[logPhase];
 
   // Auto profile with per-phase config
-  if (metadata.isAutoProfile && metadata.phaseModels && metadata.phaseThinking) {
+  if (
+    metadata.isAutoProfile &&
+    metadata.phaseModels &&
+    metadata.phaseThinking
+  ) {
     const model = metadata.phaseModels[configPhase];
     const thinking = metadata.phaseThinking[configPhase];
     return {
       model: MODEL_SHORT_LABELS[model] || model,
-      thinking: THINKING_SHORT_LABELS[thinking] || thinking
+      thinking: THINKING_SHORT_LABELS[thinking] || thinking,
     };
   }
 
   // Non-auto profile with single model/thinking
   if (metadata.model && metadata.thinkingLevel) {
     return {
-      model: MODEL_SHORT_LABELS[metadata.model] || metadata.model,
-      thinking: THINKING_SHORT_LABELS[metadata.thinkingLevel] || metadata.thinkingLevel
+      model: getModelShortLabel(metadata.model),
+      thinking:
+        THINKING_SHORT_LABELS[metadata.thinkingLevel] || metadata.thinkingLevel,
     };
   }
 
@@ -117,7 +156,7 @@ export function TaskLogs({
   logsEndRef,
   logsContainerRef,
   onLogsScroll,
-  onTogglePhase
+  onTogglePhase,
 }: TaskLogsProps) {
   return (
     <div
@@ -133,30 +172,34 @@ export function TaskLogs({
         ) : phaseLogs ? (
           <>
             {/* Phase-based collapsible logs */}
-            {(['planning', 'coding', 'validation'] as TaskLogPhase[]).map((phase) => (
-              <PhaseLogSection
-                key={phase}
-                phase={phase}
-                phaseLog={phaseLogs.phases[phase]}
-                isExpanded={expandedPhases.has(phase)}
-                onToggle={() => onTogglePhase(phase)}
-                isTaskStuck={isStuck}
-                phaseConfig={getPhaseConfig(task.metadata, phase)}
-              />
-            ))}
+            {(["planning", "coding", "validation"] as TaskLogPhase[]).map(
+              (phase) => (
+                <PhaseLogSection
+                  key={phase}
+                  phase={phase}
+                  phaseLog={phaseLogs.phases[phase]}
+                  isExpanded={expandedPhases.has(phase)}
+                  onToggle={() => onTogglePhase(phase)}
+                  isTaskStuck={isStuck}
+                  phaseConfig={getPhaseConfig(task.metadata, phase)}
+                />
+              ),
+            )}
             <div ref={logsEndRef} />
           </>
         ) : task.logs && task.logs.length > 0 ? (
           // Fallback to legacy raw logs if no phase logs exist
           <pre className="text-xs font-mono text-muted-foreground whitespace-pre-wrap break-all">
-            {task.logs.join('')}
+            {task.logs.join("")}
             <div ref={logsEndRef} />
           </pre>
         ) : (
           <div className="text-center text-sm text-muted-foreground py-8">
             <Terminal className="mx-auto mb-2 h-8 w-8 opacity-50" />
             <p>No logs yet</p>
-            <p className="text-xs mt-1">Logs will appear here when the task runs</p>
+            <p className="text-xs mt-1">
+              Logs will appear here when the task runs
+            </p>
           </div>
         )}
       </div>
@@ -174,38 +217,57 @@ interface PhaseLogSectionProps {
   phaseConfig?: { model: string; thinking: string } | null;
 }
 
-function PhaseLogSection({ phase, phaseLog, isExpanded, onToggle, isTaskStuck, phaseConfig }: PhaseLogSectionProps) {
+function PhaseLogSection({
+  phase,
+  phaseLog,
+  isExpanded,
+  onToggle,
+  isTaskStuck,
+  phaseConfig,
+}: PhaseLogSectionProps) {
   const Icon = PHASE_ICONS[phase];
-  const status = phaseLog?.status || 'pending';
+  const status = phaseLog?.status || "pending";
   const hasEntries = (phaseLog?.entries.length || 0) > 0;
 
   const getStatusBadge = () => {
     switch (status) {
-      case 'active':
+      case "active":
         if (isTaskStuck) {
           return (
-            <Badge variant="outline" className="text-xs bg-warning/10 text-warning border-warning/30 flex items-center gap-1">
+            <Badge
+              variant="outline"
+              className="text-xs bg-warning/10 text-warning border-warning/30 flex items-center gap-1"
+            >
               <AlertTriangle className="h-3 w-3" />
               Interrupted
             </Badge>
           );
         }
         return (
-          <Badge variant="outline" className="text-xs bg-info/10 text-info border-info/30 flex items-center gap-1">
+          <Badge
+            variant="outline"
+            className="text-xs bg-info/10 text-info border-info/30 flex items-center gap-1"
+          >
             <Loader2 className="h-3 w-3 animate-spin" />
             Running
           </Badge>
         );
-      case 'completed':
+      case "completed":
         return (
-          <Badge variant="outline" className="text-xs bg-success/10 text-success border-success/30 flex items-center gap-1">
+          <Badge
+            variant="outline"
+            className="text-xs bg-success/10 text-success border-success/30 flex items-center gap-1"
+          >
             <CheckCircle2 className="h-3 w-3" />
             Complete
           </Badge>
         );
-      case 'failed':
+      case "failed":
         return (
-          <Badge variant="outline" className="text-xs bg-destructive/10 text-destructive border-destructive/30 flex items-center gap-1">
+          <Badge
+            variant="outline"
+            className="text-xs bg-destructive/10 text-destructive border-destructive/30 flex items-center gap-1"
+          >
             <XCircle className="h-3 w-3" />
             Failed
           </Badge>
@@ -219,20 +281,20 @@ function PhaseLogSection({ phase, phaseLog, isExpanded, onToggle, isTaskStuck, p
     }
   };
 
-  const isInterrupted = isTaskStuck && status === 'active';
+  const isInterrupted = isTaskStuck && status === "active";
 
   return (
     <Collapsible open={isExpanded} onOpenChange={onToggle}>
       <CollapsibleTrigger asChild>
         <button
           className={cn(
-            'w-full flex items-center justify-between p-3 rounded-lg border transition-colors',
-            'hover:bg-secondary/50',
-            status === 'active' && !isInterrupted && PHASE_COLORS[phase],
-            isInterrupted && 'border-warning/30 bg-warning/5',
-            status === 'completed' && 'border-success/30 bg-success/5',
-            status === 'failed' && 'border-destructive/30 bg-destructive/5',
-            status === 'pending' && 'border-border bg-secondary/30'
+            "w-full flex items-center justify-between p-3 rounded-lg border transition-colors",
+            "hover:bg-secondary/50",
+            status === "active" && !isInterrupted && PHASE_COLORS[phase],
+            isInterrupted && "border-warning/30 bg-warning/5",
+            status === "completed" && "border-success/30 bg-success/5",
+            status === "failed" && "border-destructive/30 bg-destructive/5",
+            status === "pending" && "border-border bg-secondary/30",
           )}
         >
           <div className="flex items-center gap-2">
@@ -241,7 +303,16 @@ function PhaseLogSection({ phase, phaseLog, isExpanded, onToggle, isTaskStuck, p
             ) : (
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             )}
-            <Icon className={cn('h-4 w-4', isInterrupted ? 'text-warning' : status === 'active' ? PHASE_COLORS[phase].split(' ')[0] : 'text-muted-foreground')} />
+            <Icon
+              className={cn(
+                "h-4 w-4",
+                isInterrupted
+                  ? "text-warning"
+                  : status === "active"
+                    ? PHASE_COLORS[phase].split(" ")[0]
+                    : "text-muted-foreground",
+              )}
+            />
             <span className="font-medium text-sm">{PHASE_LABELS[phase]}</span>
             {hasEntries && (
               <span className="text-xs text-muted-foreground">
@@ -253,12 +324,18 @@ function PhaseLogSection({ phase, phaseLog, isExpanded, onToggle, isTaskStuck, p
             {/* Model and thinking level indicator */}
             {phaseConfig && (
               <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                <div className="flex items-center gap-0.5" title={`Model: ${phaseConfig.model}`}>
+                <div
+                  className="flex items-center gap-0.5"
+                  title={`Model: ${phaseConfig.model}`}
+                >
                   <Cpu className="h-3 w-3" />
                   <span>{phaseConfig.model}</span>
                 </div>
                 <span className="text-muted-foreground/50">|</span>
-                <div className="flex items-center gap-0.5" title={`Thinking: ${phaseConfig.thinking}`}>
+                <div
+                  className="flex items-center gap-0.5"
+                  title={`Thinking: ${phaseConfig.thinking}`}
+                >
                   <Brain className="h-3 w-3" />
                   <span>{phaseConfig.thinking}</span>
                 </div>
@@ -294,50 +371,93 @@ function LogEntry({ entry }: LogEntryProps) {
 
   const getToolInfo = (toolName: string) => {
     switch (toolName) {
-      case 'Read':
-        return { icon: FileText, label: 'Reading', color: 'text-blue-500 bg-blue-500/10' };
-      case 'Glob':
-        return { icon: FolderSearch, label: 'Searching files', color: 'text-amber-500 bg-amber-500/10' };
-      case 'Grep':
-        return { icon: Search, label: 'Searching code', color: 'text-green-500 bg-green-500/10' };
-      case 'Edit':
-        return { icon: Pencil, label: 'Editing', color: 'text-purple-500 bg-purple-500/10' };
-      case 'Write':
-        return { icon: FileCode, label: 'Writing', color: 'text-cyan-500 bg-cyan-500/10' };
-      case 'Bash':
-        return { icon: Terminal, label: 'Running', color: 'text-orange-500 bg-orange-500/10' };
+      case "Read":
+        return {
+          icon: FileText,
+          label: "Reading",
+          color: "text-blue-500 bg-blue-500/10",
+        };
+      case "Glob":
+        return {
+          icon: FolderSearch,
+          label: "Searching files",
+          color: "text-amber-500 bg-amber-500/10",
+        };
+      case "Grep":
+        return {
+          icon: Search,
+          label: "Searching code",
+          color: "text-green-500 bg-green-500/10",
+        };
+      case "Edit":
+        return {
+          icon: Pencil,
+          label: "Editing",
+          color: "text-purple-500 bg-purple-500/10",
+        };
+      case "Write":
+        return {
+          icon: FileCode,
+          label: "Writing",
+          color: "text-cyan-500 bg-cyan-500/10",
+        };
+      case "Bash":
+        return {
+          icon: Terminal,
+          label: "Running",
+          color: "text-orange-500 bg-orange-500/10",
+        };
       default:
-        return { icon: Wrench, label: toolName, color: 'text-muted-foreground bg-muted' };
+        return {
+          icon: Wrench,
+          label: toolName,
+          color: "text-muted-foreground bg-muted",
+        };
     }
   };
 
   const formatTime = (timestamp: string) => {
     try {
       const date = new Date(timestamp);
-      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      return date.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      });
     } catch {
-      return '';
+      return "";
     }
   };
 
   const SubphaseBadge = () => {
     if (!entry.subphase) return null;
     return (
-      <Badge variant="outline" className="text-[9px] px-1 py-0 ml-1 text-muted-foreground border-muted-foreground/30">
+      <Badge
+        variant="outline"
+        className="text-[9px] px-1 py-0 ml-1 text-muted-foreground border-muted-foreground/30"
+      >
         {entry.subphase}
       </Badge>
     );
   };
 
-  if (entry.type === 'tool_start' && entry.tool_name) {
+  if (entry.type === "tool_start" && entry.tool_name) {
     const { icon: Icon, label, color } = getToolInfo(entry.tool_name);
     return (
       <div className="flex flex-col">
-        <div className={cn('inline-flex items-center gap-2 rounded-md px-2 py-1 text-xs', color)}>
+        <div
+          className={cn(
+            "inline-flex items-center gap-2 rounded-md px-2 py-1 text-xs",
+            color,
+          )}
+        >
           <Icon className="h-3 w-3 animate-pulse" />
           <span className="font-medium">{label}</span>
           {entry.tool_input && (
-            <span className="text-muted-foreground truncate max-w-[500px]" title={entry.tool_input}>
+            <span
+              className="text-muted-foreground truncate max-w-[500px]"
+              title={entry.tool_input}
+            >
               {entry.tool_input}
             </span>
           )}
@@ -347,12 +467,18 @@ function LogEntry({ entry }: LogEntryProps) {
     );
   }
 
-  if (entry.type === 'tool_end' && entry.tool_name) {
+  if (entry.type === "tool_end" && entry.tool_name) {
     const { icon: Icon, color } = getToolInfo(entry.tool_name);
     return (
       <div className="flex flex-col">
         <div className="flex items-center gap-2">
-          <div className={cn('inline-flex items-center gap-2 rounded-md px-2 py-1 text-xs', color, 'opacity-60')}>
+          <div
+            className={cn(
+              "inline-flex items-center gap-2 rounded-md px-2 py-1 text-xs",
+              color,
+              "opacity-60",
+            )}
+          >
             <Icon className="h-3 w-3" />
             <CheckCircle2 className="h-3 w-3 text-success" />
             <span className="text-muted-foreground">Done</span>
@@ -361,9 +487,9 @@ function LogEntry({ entry }: LogEntryProps) {
             <button
               onClick={() => setIsExpanded(!isExpanded)}
               className={cn(
-                'flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded',
-                'text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors',
-                isExpanded && 'bg-secondary/50'
+                "flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded",
+                "text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors",
+                isExpanded && "bg-secondary/50",
               )}
             >
               {isExpanded ? (
@@ -391,7 +517,7 @@ function LogEntry({ entry }: LogEntryProps) {
     );
   }
 
-  if (entry.type === 'error') {
+  if (entry.type === "error") {
     return (
       <div className="flex flex-col">
         <div className="flex items-start gap-2 text-xs text-destructive bg-destructive/10 rounded-md px-2 py-1">
@@ -402,12 +528,16 @@ function LogEntry({ entry }: LogEntryProps) {
             <button
               onClick={() => setIsExpanded(!isExpanded)}
               className={cn(
-                'flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded shrink-0',
-                'text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors',
-                isExpanded && 'bg-secondary/50'
+                "flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded shrink-0",
+                "text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors",
+                isExpanded && "bg-secondary/50",
               )}
             >
-              {isExpanded ? <ChevronDown className="h-2.5 w-2.5" /> : <ChevronRight className="h-2.5 w-2.5" />}
+              {isExpanded ? (
+                <ChevronDown className="h-2.5 w-2.5" />
+              ) : (
+                <ChevronRight className="h-2.5 w-2.5" />
+              )}
             </button>
           )}
         </div>
@@ -422,7 +552,7 @@ function LogEntry({ entry }: LogEntryProps) {
     );
   }
 
-  if (entry.type === 'success') {
+  if (entry.type === "success") {
     return (
       <div className="flex items-start gap-2 text-xs text-success bg-success/10 rounded-md px-2 py-1">
         <CheckCircle2 className="h-3 w-3 mt-0.5 shrink-0" />
@@ -432,7 +562,7 @@ function LogEntry({ entry }: LogEntryProps) {
     );
   }
 
-  if (entry.type === 'info') {
+  if (entry.type === "info") {
     return (
       <div className="flex items-start gap-2 text-xs text-info bg-info/10 rounded-md px-2 py-1">
         <Info className="h-3 w-3 mt-0.5 shrink-0" />
@@ -449,15 +579,17 @@ function LogEntry({ entry }: LogEntryProps) {
         <span className="text-[10px] text-muted-foreground/60 tabular-nums shrink-0">
           {formatTime(entry.timestamp)}
         </span>
-        <span className="break-words whitespace-pre-wrap flex-1">{entry.content}</span>
+        <span className="break-words whitespace-pre-wrap flex-1">
+          {entry.content}
+        </span>
         <SubphaseBadge />
         {hasDetail && (
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className={cn(
-              'flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded shrink-0',
-              'text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors',
-              isExpanded && 'bg-secondary/50'
+              "flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded shrink-0",
+              "text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors",
+              isExpanded && "bg-secondary/50",
             )}
           >
             {isExpanded ? (

@@ -28,7 +28,7 @@ def is_graphiti_mcp_enabled() -> bool:
     """
     Check if Graphiti MCP server integration is enabled.
 
-    Requires GRAPHITI_MCP_URL to be set (e.g., http://localhost:8000/mcp/)
+    Requires GRAPHITI_MCP_URL to be set (e.g., http://localhost:9000/sse)
     This is separate from GRAPHITI_ENABLED which controls the Python library integration.
     """
     return bool(os.environ.get("GRAPHITI_MCP_URL"))
@@ -36,7 +36,7 @@ def is_graphiti_mcp_enabled() -> bool:
 
 def get_graphiti_mcp_url() -> str:
     """Get the Graphiti MCP server URL."""
-    return os.environ.get("GRAPHITI_MCP_URL", "http://localhost:8000/mcp/")
+    return os.environ.get("GRAPHITI_MCP_URL", "http://localhost:9000/sse")
 
 
 def is_electron_mcp_enabled() -> bool:
@@ -252,6 +252,18 @@ def create_client(
         json.dump(security_settings, f, indent=2)
 
     print(f"Security settings: {settings_file}")
+
+    # LLM Provider Detection & Logging
+    base_url = os.environ.get("ANTHROPIC_BASE_URL", "")
+    is_zai = "z.ai" in base_url.lower()
+    if is_zai:
+        print(f"   - LLM Provider: Z.ai GLM-4.7 (Anthropic-Compatible)")
+        print(f"   - API Endpoint: {base_url}")
+        # Z.ai GLM-4.7 supports thinking mode. If max_thinking_tokens is set,
+        # it maps to Z.ai's Deep Thinking capability.
+    else:
+        print(f"   - LLM Provider: Anthropic (Native)")
+
     print("   - Sandbox enabled (OS-level bash isolation)")
     print(f"   - Filesystem restricted to: {project_dir.resolve()}")
     print("   - Bash commands restricted to allowlist")
@@ -321,7 +333,7 @@ def create_client(
         }
 
     # Add Graphiti MCP server if enabled
-    # Requires running: docker run -d -p 8000:8000 falkordb/graphiti-knowledge-graph-mcp
+    # Requires running: docker run -d -p 9000:8000 falkordb/graphiti-knowledge-graph-mcp
     if graphiti_mcp_enabled:
         mcp_servers["graphiti-memory"] = {
             "type": "http",

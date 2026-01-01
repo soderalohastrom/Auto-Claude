@@ -2,11 +2,22 @@
  * Application settings types
  */
 
-import type { NotificationSettings } from './project';
-import type { ChangelogFormat, ChangelogAudience, ChangelogEmojiLevel } from './changelog';
+import type { NotificationSettings } from "./project";
+import type {
+  ChangelogFormat,
+  ChangelogAudience,
+  ChangelogEmojiLevel,
+} from "./changelog";
 
 // Color theme types for multi-theme support
-export type ColorTheme = 'default' | 'dusk' | 'lime' | 'ocean' | 'retro' | 'neo' | 'forest';
+export type ColorTheme =
+  | "default"
+  | "dusk"
+  | "lime"
+  | "ocean"
+  | "retro"
+  | "neo"
+  | "forest";
 
 export interface ThemePreviewColors {
   bg: string;
@@ -23,18 +34,25 @@ export interface ColorThemeDefinition {
 }
 
 // Thinking level for Claude model (budget token allocation)
-export type ThinkingLevel = 'none' | 'low' | 'medium' | 'high' | 'ultrathink';
+export type ThinkingLevel = "none" | "low" | "medium" | "high" | "ultrathink";
 
 // Model type shorthand
-export type ModelTypeShort = 'haiku' | 'sonnet' | 'opus';
+// IMPORTANT:
+// Keep this union restricted to Claude's internal short model names.
+// Widening this type (e.g. adding GLM variants) breaks a lot of typing across the app
+// where phase models, feature models, and profile models are assumed to be Claude-only.
+//
+// Z.ai/GLM selection should be treated as a UI/display option and/or an endpoint override
+// (via ANTHROPIC_BASE_URL / ANTHROPIC_AUTH_TOKEN), not as a first-class "ModelTypeShort".
+export type ModelTypeShort = "haiku" | "sonnet" | "opus";
 
 // Phase-based model configuration for Auto profile
 // Each phase can use a different model optimized for that task type
 export interface PhaseModelConfig {
-  spec: ModelTypeShort;       // Spec creation (discovery, requirements, context)
-  planning: ModelTypeShort;   // Implementation planning
-  coding: ModelTypeShort;     // Actual coding implementation
-  qa: ModelTypeShort;         // QA review and fixing
+  spec: ModelTypeShort; // Spec creation (discovery, requirements, context)
+  planning: ModelTypeShort; // Implementation planning
+  coding: ModelTypeShort; // Actual coding implementation
+  qa: ModelTypeShort; // QA review and fixing
 }
 
 // Thinking level configuration per phase
@@ -47,9 +65,9 @@ export interface PhaseThinkingConfig {
 
 // Feature-specific model configuration (for non-pipeline features)
 export interface FeatureModelConfig {
-  insights: ModelTypeShort;    // Insights chat feature
-  ideation: ModelTypeShort;    // Ideation generation
-  roadmap: ModelTypeShort;     // Roadmap generation
+  insights: ModelTypeShort; // Insights chat feature
+  ideation: ModelTypeShort; // Ideation generation
+  roadmap: ModelTypeShort; // Roadmap generation
 }
 
 // Feature-specific thinking level configuration
@@ -66,7 +84,7 @@ export interface AgentProfile {
   description: string;
   model: ModelTypeShort;
   thinkingLevel: ThinkingLevel;
-  icon?: string;  // Lucide icon name
+  icon?: string; // Lucide icon name
   // Auto profile specific - per-phase configuration
   isAutoProfile?: boolean;
   phaseModels?: PhaseModelConfig;
@@ -74,7 +92,7 @@ export interface AgentProfile {
 }
 
 export interface AppSettings {
-  theme: 'light' | 'dark' | 'system';
+  theme: "light" | "dark" | "system";
   colorTheme?: ColorTheme;
   defaultModel: string;
   agentFramework: string;
@@ -90,7 +108,7 @@ export interface AppSettings {
   globalGoogleApiKey?: string;
   globalGroqApiKey?: string;
   // Graphiti LLM provider settings
-  graphitiLlmProvider?: 'openai' | 'anthropic' | 'google' | 'groq' | 'ollama';
+  graphitiLlmProvider?: "openai" | "anthropic" | "google" | "groq" | "ollama";
   ollamaBaseUrl?: string;
   // Onboarding wizard completion state
   onboardingCompleted?: boolean;
@@ -144,7 +162,7 @@ export interface AutoBuildSourceUpdateResult {
 }
 
 export interface AutoBuildSourceUpdateProgress {
-  stage: 'checking' | 'downloading' | 'extracting' | 'complete' | 'error';
+  stage: "checking" | "downloading" | "extracting" | "complete" | "error";
   percent?: number;
   message: string;
   /** New version after successful update - used to refresh UI */

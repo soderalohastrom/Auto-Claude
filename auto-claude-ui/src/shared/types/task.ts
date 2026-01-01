@@ -2,28 +2,48 @@
  * Task-related types
  */
 
-import type { ThinkingLevel, PhaseModelConfig, PhaseThinkingConfig } from './settings';
+import type {
+  ThinkingLevel,
+  PhaseModelConfig,
+  PhaseThinkingConfig,
+} from "./settings";
 
-export type TaskStatus = 'backlog' | 'in_progress' | 'ai_review' | 'human_review' | 'done';
+export type TaskStatus =
+  | "backlog"
+  | "in_progress"
+  | "ai_review"
+  | "human_review"
+  | "done";
 
 // Reason why a task is in human_review status
 // - 'completed': All subtasks done and QA passed, ready for final approval/merge
 // - 'errors': Subtasks failed during execution
 // - 'qa_rejected': QA found issues that need fixing
 // - 'plan_review': Spec/plan created and awaiting approval before coding starts
-export type ReviewReason = 'completed' | 'errors' | 'qa_rejected' | 'plan_review';
+export type ReviewReason =
+  | "completed"
+  | "errors"
+  | "qa_rejected"
+  | "plan_review";
 
-export type SubtaskStatus = 'pending' | 'in_progress' | 'completed' | 'failed';
+export type SubtaskStatus = "pending" | "in_progress" | "completed" | "failed";
 
 // Execution phases for visual progress tracking
-export type ExecutionPhase = 'idle' | 'planning' | 'coding' | 'qa_review' | 'qa_fixing' | 'complete' | 'failed';
+export type ExecutionPhase =
+  | "idle"
+  | "planning"
+  | "coding"
+  | "qa_review"
+  | "qa_fixing"
+  | "complete"
+  | "failed";
 
 export interface ExecutionProgress {
   phase: ExecutionPhase;
-  phaseProgress: number;  // 0-100 within current phase
-  overallProgress: number;  // 0-100 overall
-  currentSubtask?: string;  // Current subtask being processed
-  message?: string;  // Current status message
+  phaseProgress: number; // 0-100 within current phase
+  overallProgress: number; // 0-100 overall
+  currentSubtask?: string; // Current subtask being processed
+  message?: string; // Current status message
   startedAt?: Date;
 }
 
@@ -34,30 +54,38 @@ export interface Subtask {
   status: SubtaskStatus;
   files: string[];
   verification?: {
-    type: 'command' | 'browser';
+    type: "command" | "browser";
     run?: string;
     scenario?: string;
   };
 }
 
 export interface QAReport {
-  status: 'passed' | 'failed' | 'pending';
+  status: "passed" | "failed" | "pending";
   issues: QAIssue[];
   timestamp: Date;
 }
 
 export interface QAIssue {
   id: string;
-  severity: 'critical' | 'major' | 'minor';
+  severity: "critical" | "major" | "minor";
   description: string;
   file?: string;
   line?: number;
 }
 
 // Task Log Types - for persistent, phase-based logging
-export type TaskLogPhase = 'planning' | 'coding' | 'validation';
-export type TaskLogPhaseStatus = 'pending' | 'active' | 'completed' | 'failed';
-export type TaskLogEntryType = 'text' | 'tool_start' | 'tool_end' | 'phase_start' | 'phase_end' | 'error' | 'success' | 'info';
+export type TaskLogPhase = "planning" | "coding" | "validation";
+export type TaskLogPhaseStatus = "pending" | "active" | "completed" | "failed";
+export type TaskLogEntryType =
+  | "text"
+  | "tool_start"
+  | "tool_end"
+  | "phase_start"
+  | "phase_end"
+  | "error"
+  | "success"
+  | "info";
 
 export interface TaskLogEntry {
   timestamp: string;
@@ -69,9 +97,9 @@ export interface TaskLogEntry {
   subtask_id?: string;
   session?: number;
   // Fields for expandable detail view
-  detail?: string;  // Full content that can be expanded (e.g., file contents, command output)
-  subphase?: string;  // Subphase grouping (e.g., "PROJECT DISCOVERY", "CONTEXT GATHERING")
-  collapsed?: boolean;  // Whether to show collapsed by default in UI
+  detail?: string; // Full content that can be expanded (e.g., file contents, command output)
+  subphase?: string; // Subphase grouping (e.g., "PROJECT DISCOVERY", "CONTEXT GATHERING")
+  collapsed?: boolean; // Whether to show collapsed by default in UI
 }
 
 export interface TaskPhaseLog {
@@ -95,7 +123,13 @@ export interface TaskLogs {
 
 // Streaming markers from Python (similar to InsightsStreamChunk)
 export interface TaskLogStreamChunk {
-  type: 'text' | 'tool_start' | 'tool_end' | 'phase_start' | 'phase_end' | 'error';
+  type:
+    | "text"
+    | "tool_start"
+    | "tool_end"
+    | "phase_start"
+    | "phase_end"
+    | "error";
   content?: string;
   phase?: TaskLogPhase;
   timestamp?: string;
@@ -109,22 +143,22 @@ export interface TaskLogStreamChunk {
 
 // Image attachment types for task creation
 export interface ImageAttachment {
-  id: string;           // Unique identifier (UUID)
-  filename: string;     // Original filename
-  mimeType: string;     // e.g., 'image/png'
-  size: number;         // Size in bytes
-  data?: string;        // Base64 data (for transport)
-  path?: string;        // Relative path after storage
-  thumbnail?: string;   // Base64 thumbnail for preview
+  id: string; // Unique identifier (UUID)
+  filename: string; // Original filename
+  mimeType: string; // e.g., 'image/png'
+  size: number; // Size in bytes
+  data?: string; // Base64 data (for transport)
+  path?: string; // Relative path after storage
+  thumbnail?: string; // Base64 thumbnail for preview
 }
 
 // Referenced file types for task creation (files/folders from project)
 export interface ReferencedFile {
-  id: string;           // Unique identifier (UUID)
-  path: string;         // Relative path from project root
-  name: string;         // File or folder name
+  id: string; // Unique identifier (UUID)
+  path: string; // Relative path from project root
+  name: string; // File or folder name
   isDirectory: boolean; // True if this is a directory
-  addedAt: Date;        // When the file was added as reference
+  addedAt: Date; // When the file was added as reference
 }
 
 // Draft state for task creation (auto-saved when dialog closes)
@@ -132,13 +166,13 @@ export interface TaskDraft {
   projectId: string;
   title: string;
   description: string;
-  category: TaskCategory | '';
-  priority: TaskPriority | '';
-  complexity: TaskComplexity | '';
-  impact: TaskImpact | '';
-  profileId?: string;  // Agent profile ID ('auto', 'complex', 'balanced', 'quick', 'custom')
-  model: ModelType | '';
-  thinkingLevel: ThinkingLevel | '';
+  category: TaskCategory | "";
+  priority: TaskPriority | "";
+  complexity: TaskComplexity | "";
+  impact: TaskImpact | "";
+  profileId?: string; // Agent profile ID ('auto', 'complex', 'balanced', 'quick', 'custom')
+  model: ModelType | "";
+  thinkingLevel: ThinkingLevel | "";
   // Auto profile - per-phase configuration
   phaseModels?: PhaseModelConfig;
   phaseThinking?: PhaseThinkingConfig;
@@ -149,34 +183,46 @@ export interface TaskDraft {
 }
 
 // Task metadata from ideation or manual entry
-export type TaskComplexity = 'trivial' | 'small' | 'medium' | 'large' | 'complex';
-export type TaskImpact = 'low' | 'medium' | 'high' | 'critical';
-export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+export type TaskComplexity =
+  | "trivial"
+  | "small"
+  | "medium"
+  | "large"
+  | "complex";
+export type TaskImpact = "low" | "medium" | "high" | "critical";
+export type TaskPriority = "low" | "medium" | "high" | "urgent";
 // Re-export ThinkingLevel (defined in settings.ts) for convenience
 export type { ThinkingLevel };
-export type ModelType = 'haiku' | 'sonnet' | 'opus';
+export type ModelType = "haiku" | "sonnet" | "opus" | "glm-4.7" | "glm-4.5-air";
 export type TaskCategory =
-  | 'feature'
-  | 'bug_fix'
-  | 'refactoring'
-  | 'documentation'
-  | 'security'
-  | 'performance'
-  | 'ui_ux'
-  | 'infrastructure'
-  | 'testing';
+  | "feature"
+  | "bug_fix"
+  | "refactoring"
+  | "documentation"
+  | "security"
+  | "performance"
+  | "ui_ux"
+  | "infrastructure"
+  | "testing";
 
 export interface TaskMetadata {
   // Origin tracking
-  sourceType?: 'ideation' | 'manual' | 'imported' | 'insights' | 'roadmap' | 'linear' | 'github';
-  ideationType?: string;  // e.g., 'code_improvements', 'security_hardening'
-  ideaId?: string;  // Reference to original idea if converted
-  featureId?: string;  // Reference to roadmap feature if from roadmap
-  linearIssueId?: string;  // Reference to Linear issue if from Linear
-  linearIdentifier?: string;  // Linear issue identifier (e.g., 'ABC-123')
-  linearUrl?: string;  // Linear issue URL
-  githubIssueNumber?: number;  // Reference to GitHub issue number if from GitHub
-  githubUrl?: string;  // GitHub issue URL
+  sourceType?:
+    | "ideation"
+    | "manual"
+    | "imported"
+    | "insights"
+    | "roadmap"
+    | "linear"
+    | "github";
+  ideationType?: string; // e.g., 'code_improvements', 'security_hardening'
+  ideaId?: string; // Reference to original idea if converted
+  featureId?: string; // Reference to roadmap feature if from roadmap
+  linearIssueId?: string; // Reference to Linear issue if from Linear
+  linearIdentifier?: string; // Linear issue identifier (e.g., 'ABC-123')
+  linearUrl?: string; // Linear issue URL
+  githubIssueNumber?: number; // Reference to GitHub issue number if from GitHub
+  githubUrl?: string; // GitHub issue URL
 
   // Classification
   category?: TaskCategory;
@@ -185,23 +231,23 @@ export interface TaskMetadata {
   priority?: TaskPriority;
 
   // Context
-  rationale?: string;  // Why this task matters
-  problemSolved?: string;  // What problem this addresses
-  targetAudience?: string;  // Who benefits
+  rationale?: string; // Why this task matters
+  problemSolved?: string; // What problem this addresses
+  targetAudience?: string; // Who benefits
 
   // Technical details
-  affectedFiles?: string[];  // Files likely to be modified
-  dependencies?: string[];  // Other features/tasks this depends on
-  acceptanceCriteria?: string[];  // What defines "done"
+  affectedFiles?: string[]; // Files likely to be modified
+  dependencies?: string[]; // Other features/tasks this depends on
+  acceptanceCriteria?: string[]; // What defines "done"
 
   // Effort estimation
   estimatedEffort?: TaskComplexity;
 
   // Type-specific metadata (from different idea types)
-  securitySeverity?: 'low' | 'medium' | 'high' | 'critical';
+  securitySeverity?: "low" | "medium" | "high" | "critical";
   performanceCategory?: string;
   uiuxCategory?: string;
-  codeQualitySeverity?: 'suggestion' | 'minor' | 'major' | 'critical';
+  codeQualitySeverity?: "suggestion" | "minor" | "major" | "critical";
 
   // Image attachments (screenshots, mockups, diagrams)
   attachedImages?: ImageAttachment[];
@@ -210,22 +256,22 @@ export interface TaskMetadata {
   referencedFiles?: ReferencedFile[];
 
   // Review settings
-  requireReviewBeforeCoding?: boolean;  // Require human review of spec/plan before coding starts
+  requireReviewBeforeCoding?: boolean; // Require human review of spec/plan before coding starts
 
   // Agent configuration (from agent profile or manual selection)
-  model?: ModelType;  // Claude model to use (haiku, sonnet, opus) - used when not auto profile
-  thinkingLevel?: ThinkingLevel;  // Thinking budget level (none, low, medium, high, ultrathink)
+  model?: ModelType; // Claude model to use (haiku, sonnet, opus) - used when not auto profile
+  thinkingLevel?: ThinkingLevel; // Thinking budget level (none, low, medium, high, ultrathink)
   // Auto profile - per-phase model configuration
-  isAutoProfile?: boolean;  // True when using Auto (Optimized) profile
-  phaseModels?: PhaseModelConfig;  // Per-phase model configuration
-  phaseThinking?: PhaseThinkingConfig;  // Per-phase thinking configuration
+  isAutoProfile?: boolean; // True when using Auto (Optimized) profile
+  phaseModels?: PhaseModelConfig; // Per-phase model configuration
+  phaseThinking?: PhaseThinkingConfig; // Per-phase thinking configuration
 
   // Git/Worktree configuration
-  baseBranch?: string;  // Override base branch for this task's worktree
+  baseBranch?: string; // Override base branch for this task's worktree
 
   // Archive status
-  archivedAt?: string;  // ISO date when task was archived
-  archivedInVersion?: string;  // Version in which task was archived (from changelog)
+  archivedAt?: string; // ISO date when task was archived
+  archivedInVersion?: string; // Version in which task was archived (from changelog)
 }
 
 export interface Task {
@@ -235,23 +281,23 @@ export interface Task {
   title: string;
   description: string;
   status: TaskStatus;
-  reviewReason?: ReviewReason;  // Why task needs human review (only set when status is 'human_review')
+  reviewReason?: ReviewReason; // Why task needs human review (only set when status is 'human_review')
   subtasks: Subtask[];
   qaReport?: QAReport;
   logs: string[];
-  metadata?: TaskMetadata;  // Rich metadata from ideation or manual entry
-  executionProgress?: ExecutionProgress;  // Real-time execution progress
-  releasedInVersion?: string;  // Version in which this task was released
-  stagedInMainProject?: boolean;  // True if changes were staged to main project (worktree merged with --no-commit)
-  stagedAt?: string;  // ISO timestamp when changes were staged
+  metadata?: TaskMetadata; // Rich metadata from ideation or manual entry
+  executionProgress?: ExecutionProgress; // Real-time execution progress
+  releasedInVersion?: string; // Version in which this task was released
+  stagedInMainProject?: boolean; // True if changes were staged to main project (worktree merged with --no-commit)
+  stagedAt?: string; // ISO timestamp when changes were staged
   createdAt: Date;
   updatedAt: Date;
 }
 
 // Implementation Plan (from auto-claude)
 export interface ImplementationPlan {
-  feature?: string;  // Some plans use 'feature', some use 'title'
-  title?: string;    // Alternative to 'feature' for task name
+  feature?: string; // Some plans use 'feature', some use 'title'
+  title?: string; // Alternative to 'feature' for task name
   workflow_type: string;
   services_involved?: string[];
   phases: Phase[];
@@ -304,16 +350,16 @@ export interface WorktreeDiff {
 
 export interface WorktreeDiffFile {
   path: string;
-  status: 'added' | 'modified' | 'deleted' | 'renamed';
+  status: "added" | "modified" | "deleted" | "renamed";
   additions: number;
   deletions: number;
 }
 
 // Conflict severity levels from merge system
-export type ConflictSeverity = 'none' | 'low' | 'medium' | 'high' | 'critical';
+export type ConflictSeverity = "none" | "low" | "medium" | "high" | "critical";
 
 // Type of conflict
-export type ConflictType = 'semantic' | 'git';
+export type ConflictType = "semantic" | "git";
 
 // Information about a detected conflict
 export interface MergeConflict {
