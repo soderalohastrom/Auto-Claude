@@ -12,13 +12,14 @@ from typing import Literal, TypedDict
 
 # Model shorthand to full model ID mapping
 MODEL_ID_MAP: dict[str, str] = {
-    "opus": "claude-opus-4-5-20251101",
-    "sonnet": "claude-sonnet-4-5-20250929",
-    "haiku": "claude-haiku-4-5-20251001",
-    # Z.ai GLM Mappings (Commented out - toggle as needed)
-    # "opus": "GLM-4.7",
-    # "sonnet": "GLM-4.7",
-    # "haiku": "GLM-4.5-Air",
+    # Z.ai GLM Mappings (ACTIVE - using cheaper Z.ai models)
+    "opus": "glm-4-7-latest",
+    "sonnet": "glm-4-7-latest",
+    "haiku": "glm-4-5-air-latest",
+    # Claude Mappings (Commented out for "rich day")
+    # "opus": "claude-opus-4-5-20251101",
+    # "sonnet": "claude-sonnet-4-5-20250929",
+    # "haiku": "claude-haiku-4-5-20251001",
 }
 
 # Thinking level to budget tokens mapping (None = no extended thinking)

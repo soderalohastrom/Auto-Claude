@@ -1,6 +1,6 @@
 /**
  * Model and agent profile constants
- * Claude models, thinking levels, memory backends, and agent profiles
+ * Claude models, Z.ai GLM models, MiniMax models, thinking levels, memory backends, and agent profiles
  */
 
 import type {
@@ -8,24 +8,73 @@ import type {
   PhaseModelConfig,
   FeatureModelConfig,
   FeatureThinkingConfig,
+  ModelTypeShort,
 } from "../types/settings";
+
+export type LLMProvider = "zai" | "minimax";
+
+export interface ProviderConfig {
+  name: string;
+  baseUrl: string;
+  apiKeyEnvVar: string;
+  defaultModel: string;
+  fastModel: string;
+}
+
+export const PROVIDER_CONFIGS: Record<LLMProvider, ProviderConfig> = {
+  zai: {
+    name: "Z.ai (GLM)",
+    baseUrl: "https://api.z.ai/v1",
+    apiKeyEnvVar: "ZAI_API_KEY",
+    defaultModel: "glm-4-7-latest",
+    fastModel: "glm-4-5-air-latest",
+  },
+  minimax: {
+    name: "MiniMax",
+    baseUrl: "https://api.minimax.io/anthropic",
+    apiKeyEnvVar: "MINIMAX_API_KEY",
+    defaultModel: "MiniMax-M2.1",
+    fastModel: "MiniMax-M2.1-lightning",
+  },
+};
+
+export const DEFAULT_PROVIDER: LLMProvider = "zai";
 
 // ============================================
 // Available Models
 // ============================================
 
 export const AVAILABLE_MODELS = [
-  { value: "opus", label: "Claude Opus 4.5" },
-  { value: "sonnet", label: "Claude Sonnet 4.5" },
-  { value: "haiku", label: "Claude Haiku 4.5" },
+  {
+    value: "opus",
+    label: "Z.ai GLM-4.7 (Cost-Effective)",
+    provider: "zai" as LLMProvider,
+  },
+  {
+    value: "sonnet",
+    label: "MiniMax M2.1 (Advanced Thinking)",
+    provider: "minimax" as LLMProvider,
+  },
+  {
+    value: "haiku",
+    label: "Z.ai GLM-4.5-Air (Fast)",
+    provider: "zai" as LLMProvider,
+  },
 ] as const;
 
-// Maps model shorthand to actual Claude model IDs
-export const MODEL_ID_MAP: Record<string, string> = {
-  opus: "claude-opus-4-5-20251101",
-  sonnet: "claude-sonnet-4-5-20250929",
-  haiku: "claude-haiku-4-5-20251001",
+// Maps model shorthand to actual model IDs with provider info
+export const MODEL_ID_MAP: Record<
+  ModelTypeShort,
+  { id: string; provider: LLMProvider }
+> = {
+  opus: { id: "glm-4-7-latest", provider: "zai" },
+  sonnet: { id: "MiniMax-M2.1", provider: "minimax" },
+  haiku: { id: "glm-4-5-air-latest", provider: "zai" },
 } as const;
+
+// ============================================
+// Thinking Levels
+// ============================================
 
 // Maps thinking levels to budget tokens (null = no extended thinking)
 export const THINKING_BUDGET_MAP: Record<string, number | null> = {
@@ -36,11 +85,7 @@ export const THINKING_BUDGET_MAP: Record<string, number | null> = {
   ultrathink: 65536,
 } as const;
 
-// ============================================
-// Thinking Levels
-// ============================================
-
-// Thinking levels for Claude model (budget token allocation)
+// Thinking levels for model (budget token allocation)
 export const THINKING_LEVELS = [
   { value: "none", label: "None", description: "No extended thinking" },
   { value: "low", label: "Low", description: "Brief consideration" },
@@ -58,21 +103,21 @@ export const THINKING_LEVELS = [
 // ============================================
 
 // Default phase model configuration for Auto profile
-// Uses Opus across all phases for maximum quality
+// Uses Z.ai GLM-4.7 for spec/planning, GLM-4.5-Air for coding/QA (cost-effective)
 export const DEFAULT_PHASE_MODELS: PhaseModelConfig = {
-  spec: "opus", // Best quality for spec creation
-  planning: "opus", // Complex architecture decisions benefit from Opus
-  coding: "opus", // Highest quality implementation
-  qa: "opus", // Thorough QA review
+  spec: "opus",
+  planning: "opus",
+  coding: "haiku",
+  qa: "haiku",
 };
 
 // Default phase thinking configuration for Auto profile
 export const DEFAULT_PHASE_THINKING: import("../types/settings").PhaseThinkingConfig =
   {
-    spec: "ultrathink", // Deep thinking for comprehensive spec creation
-    planning: "high", // High thinking for planning complex features
-    coding: "low", // Faster coding iterations
-    qa: "low", // Efficient QA review
+    spec: "ultrathink",
+    planning: "high",
+    coding: "low",
+    qa: "low",
   };
 
 // ============================================
@@ -81,16 +126,16 @@ export const DEFAULT_PHASE_THINKING: import("../types/settings").PhaseThinkingCo
 
 // Default feature model configuration (for insights, ideation, roadmap)
 export const DEFAULT_FEATURE_MODELS: FeatureModelConfig = {
-  insights: "sonnet", // Fast, responsive chat
-  ideation: "opus", // Creative ideation benefits from Opus
-  roadmap: "opus", // Strategic planning benefits from Opus
+  insights: "haiku",
+  ideation: "opus",
+  roadmap: "opus",
 };
 
 // Default feature thinking configuration
 export const DEFAULT_FEATURE_THINKING: FeatureThinkingConfig = {
-  insights: "medium", // Balanced thinking for chat
-  ideation: "high", // Deep thinking for creative ideas
-  roadmap: "high", // Strategic thinking for roadmap
+  insights: "medium",
+  ideation: "high",
+  roadmap: "high",
 };
 
 // Feature labels for UI display
@@ -112,13 +157,17 @@ export const FEATURE_LABELS: Record<
   },
 };
 
-// Default agent profiles for preset model/thinking configurations
+// ============================================
+// Agent Profiles
+// ============================================
+
 export const DEFAULT_AGENT_PROFILES: AgentProfile[] = [
   {
     id: "auto",
-    name: "Auto (Optimized)",
-    description: "Uses Opus across all phases with optimized thinking levels",
-    model: "opus", // Fallback/default model
+    name: "Auto (Multi-Provider Optimized)",
+    description:
+      "Uses Z.ai GLM-4.7 and MiniMax M2.1 with optimized thinking levels",
+    model: "opus",
     thinkingLevel: "high",
     icon: "Sparkles",
     isAutoProfile: true,
@@ -137,7 +186,7 @@ export const DEFAULT_AGENT_PROFILES: AgentProfile[] = [
   {
     id: "balanced",
     name: "Balanced",
-    description: "Good balance of speed and quality for most tasks",
+    description: "Good balance of speed and quality with MiniMax M2.1",
     model: "sonnet",
     thinkingLevel: "medium",
     icon: "Scale",
@@ -145,7 +194,7 @@ export const DEFAULT_AGENT_PROFILES: AgentProfile[] = [
   {
     id: "quick",
     name: "Quick Edits",
-    description: "Fast iterations for simple changes and quick fixes",
+    description: "Fast iterations with Z.ai GLM-4.5-Air",
     model: "haiku",
     thinkingLevel: "low",
     icon: "Zap",

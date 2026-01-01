@@ -256,11 +256,15 @@ def create_client(
     # LLM Provider Detection & Logging
     base_url = os.environ.get("ANTHROPIC_BASE_URL", "")
     is_zai = "z.ai" in base_url.lower()
-    if is_zai:
+    is_minimax = "minimax.io" in base_url.lower()
+    if is_minimax:
+        print(f"   - LLM Provider: MiniMax M2.1 (Anthropic-Compatible)")
+        print(f"   - API Endpoint: {base_url}")
+        # MiniMax M2.1 supports thinking mode via max_thinking_tokens
+    elif is_zai:
         print(f"   - LLM Provider: Z.ai GLM-4.7 (Anthropic-Compatible)")
         print(f"   - API Endpoint: {base_url}")
-        # Z.ai GLM-4.7 supports thinking mode. If max_thinking_tokens is set,
-        # it maps to Z.ai's Deep Thinking capability.
+        # Z.ai GLM-4.7 supports thinking mode via max_thinking_tokens
     else:
         print(f"   - LLM Provider: Anthropic (Native)")
 
